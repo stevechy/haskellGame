@@ -34,7 +34,9 @@ type RenderingHandlers = Data.IntMap.Lazy.IntMap RenderingHandler
 
 type GraphicResources = Data.IntMap.Lazy.IntMap Graphics.UI.SDL.Types.Surface
 
-data GameAction = MoveLeft | MoveRight | CancelLeft | CancelRight deriving (Show, Eq)
+type CollisionUnit = (Int, BoundingBox, Position)
+
+data GameAction = MoveLeft | MoveRight | Jump | CancelLeft | CancelRight deriving (Show, Eq)
 
 data GameState = GameState { worldState :: WorldState, 
                              resources :: GraphicResources, 
@@ -43,7 +45,7 @@ data GameState = GameState { worldState :: WorldState,
                              boundingBoxState :: BoundingBoxState,
                              renderingHandlers :: RenderingHandlers }
 
-data ActorState = Idle | MovingLeft | MovingRight
+data ActorState = Idle | MovingLeft | MovingRight 
 
 type ActorStates = Data.IntMap.Lazy.IntMap ActorState
 
@@ -82,7 +84,7 @@ initialActorStates :: ActorStates
 initialActorStates = Data.IntMap.Lazy.fromList [(playerId, Idle)]
 
 initialPhysicsState :: PhysicsState
-initialPhysicsState = Data.IntMap.Lazy.fromList [(playerId, VelocityAcceleration {vx = 0, vy = 0.0, ax = 0, ay = 0})]
+initialPhysicsState = Data.IntMap.Lazy.fromList [(playerId, VelocityAcceleration {vx = 0, vy = 0.05, ax = 0, ay = 0})]
 
 initialRenderingHandlers :: RenderingHandlers
 initialRenderingHandlers = Data.IntMap.Lazy.fromList [(floorId, rectRenderer),(playerId, characterRender)] 
@@ -156,6 +158,7 @@ gameAction event = case event of
     case Keysym.symKey keysym of
       Keysym.SDLK_RIGHT -> [MoveRight]
       Keysym.SDLK_LEFT -> [MoveLeft]
+      Keysym.SDLK_UP -> [Jump]
       _ -> []
   KeyUp keysym ->
     case Keysym.symKey keysym of
@@ -186,7 +189,7 @@ simulateActor :: ActorStates -> Int -> Position -> Position
 simulateActor actorStates actorId actorPosition =
   case (Data.IntMap.Lazy.lookup actorId actorStates, actorPosition) of
               ((Just MovingRight), (Position x y)) -> Position (x+5) y
-              ((Just MovingLeft), (Position x y)) ->  Position (x-5) y
+              ((Just MovingLeft), (Position x y)) ->  Position (x-5) y             
               (_, position) -> position
               
 
@@ -206,16 +209,39 @@ collisionProduct :: [a] -> [(a,a)]
 collisionProduct (x:xs) = Data.List.foldr (\ item seed -> (x,item) : seed)  (collisionProduct xs) xs
 collisionProduct [] = []
        
-boundingBoxList :: GameState -> [(Int, BoundingBox, Position)]
+
+
+boundingBoxList :: GameState -> [CollisionUnit]
 boundingBoxList gameState = foldrWithKey bbWithPosition [] $ boundingBoxState gameState
   where worldStateItem = worldState gameState
         bbWithPosition key value seed = case Data.IntMap.Lazy.lookup key worldStateItem of
           Just pos -> (key, value, pos) : seed
           Nothing -> seed
+          
+collides :: (CollisionUnit, CollisionUnit) -> Bool
+collides ((idA,bbA,posA),(idB,bbB,posB)) = ((xa1 <= xb1 && xb1 <= xa2) || (xb1 <= xa1 && xa1 <= xb2)) && ((ya1 <= yb1 && yb1 <= ya2) || (yb1 <= ya1 && ya1 <= yb2))
+  where xa1 = (x posA) +  (relX bbA)
+        xa2 = xa1 + (boxWidth bbA)
+        xb1 = (x posB) + (relX bbB)
+        xb2 = xb1 + (boxWidth bbB)
+        ya1 = (y posA) + (relY bbA)
+        ya2 = ya1 + (boxHeight bbA)
+        yb1 = (y posB) + (relY bbB)
+        yb2 = yb1 + (boxHeight bbB)
 
 detectAndResolveCollisions :: Int -> GameState -> GameState
-detectAndResolveCollisions delta gameState = gameState     
-
+detectAndResolveCollisions delta gameState = Data.List.foldl' respondToCollision gameState (collisions gameState)
+                                             
+respondToCollision gameStateSeed  ((idA,bbA,posA),(idB,bbB, posB)) 
+  | idA == playerId = gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (\phys -> phys { vy = 0})  idA (physicsState gameStateSeed) }
+  | idB == playerId = gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (\phys -> phys { vy = 0})  idB (physicsState gameStateSeed) }
+  | True = gameStateSeed
+  
+collisions :: GameState -> [(CollisionUnit, CollisionUnit)]
+collisions gameState =   
+  let collisionsToTest = collisionProduct $ boundingBoxList gameState
+  in  Data.List.filter collides collisionsToTest
+                                             
 
 drawGame :: Graphics.UI.SDL.Types.Surface -> GameState -> IO ()
 drawGame videoSurface gameState = do  
