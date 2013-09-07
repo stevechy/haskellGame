@@ -45,7 +45,7 @@ data GameState = GameState { worldState :: WorldState,
                              boundingBoxState :: BoundingBoxState,
                              renderingHandlers :: RenderingHandlers }
 
-data ActorState = Idle | MovingLeft | MovingRight 
+data ActorState = Idle | MovingLeft | MovingRight | Jumping
 
 type ActorStates = Data.IntMap.Lazy.IntMap ActorState
 
@@ -65,9 +65,11 @@ characterRender :: RenderingHandler
 characterRender key gameState videoSurface = do
   let worldStateElement = worldState gameState
   let graphicsElement = resources gameState
+  let red = SDL.Pixel 0xFF0000FF
   let Just (Position x y) = Data.IntMap.Lazy.lookup key worldStateElement
   let Just (image) = Data.IntMap.Lazy.lookup key graphicsElement
   _ <- blitSurface image Nothing videoSurface (Just (Rect x y 101 171))
+  _ <- Graphics.UI.SDL.Primitives.rectangle videoSurface (Rect x y (x+101) (y+171)) red 
   return ();
 
 
@@ -95,7 +97,7 @@ initialBoundingBoxState = Data.IntMap.Lazy.fromList [(playerId, BoundingBox 0 0 
 
 loadResources :: IO (GraphicResources)
 loadResources = do  
-  image <- Graphics.UI.SDL.Image.load "PlanetCute PNG/Character Boy.png"
+  image <- Graphics.UI.SDL.Image.load "lambdaChar.png"
   return $ Data.IntMap.Lazy.fromList [(playerId, image)]
 
 runGame :: IO ()
@@ -176,6 +178,7 @@ processActorEvent event actorState =
   case (event,actorState) of
     (MoveRight, _) -> MovingRight
     (MoveLeft, _) -> MovingLeft
+    (Jump, _) -> Jumping
     (CancelRight, _) -> Idle  
     (CancelLeft, _) -> Idle
     
@@ -190,6 +193,7 @@ simulateActor actorStates actorId actorPosition =
   case (Data.IntMap.Lazy.lookup actorId actorStates, actorPosition) of
               ((Just MovingRight), (Position x y)) -> Position (x+5) y
               ((Just MovingLeft), (Position x y)) ->  Position (x-5) y             
+              ((Just Jumping), (Position x y)) -> Position x (y-5)
               (_, position) -> position
               
 
