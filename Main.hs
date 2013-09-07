@@ -36,7 +36,7 @@ type GraphicResources = Data.IntMap.Lazy.IntMap Graphics.UI.SDL.Types.Surface
 
 type CollisionUnit = (Int, BoundingBox, Position)
 
-data GameAction = MoveLeft | MoveRight | Jump | CancelLeft | CancelRight deriving (Show, Eq)
+data GameAction = MoveLeft | MoveRight | Jump | StopJump | CancelLeft | CancelRight deriving (Show, Eq)
 
 data GameState = GameState { worldState :: WorldState, 
                              resources :: GraphicResources, 
@@ -86,7 +86,7 @@ initialActorStates :: ActorStates
 initialActorStates = Data.IntMap.Lazy.fromList [(playerId, Idle)]
 
 initialPhysicsState :: PhysicsState
-initialPhysicsState = Data.IntMap.Lazy.fromList [(playerId, VelocityAcceleration {vx = 0, vy = 0.05, ax = 0, ay = 0})]
+initialPhysicsState = Data.IntMap.Lazy.fromList [(playerId, VelocityAcceleration {vx = 0, vy = 0.00, ax = 0, ay = 0.0002})]
 
 initialRenderingHandlers :: RenderingHandlers
 initialRenderingHandlers = Data.IntMap.Lazy.fromList [(floorId, rectRenderer),(playerId, characterRender)] 
@@ -140,7 +140,7 @@ gameLoop drawAction eventAction gameState lastFrameTicks = do
   let finalState = 
         Data.List.foldl' ( \ gameState gameStep -> gameStep gameState) gameState 
                    [ (processGameState gameEvents), 
-                     simulateGameState, 
+                     simulateGameStatePhysics, 
                      applyPhysics delay, 
                      detectAndResolveCollisions delay
                    ]        
@@ -166,6 +166,7 @@ gameAction event = case event of
     case Keysym.symKey keysym of
       Keysym.SDLK_RIGHT -> [CancelRight]
       Keysym.SDLK_LEFT -> [CancelLeft]
+      Keysym.SDLK_UP -> [StopJump]
       _ -> []
   _ -> []
     
@@ -175,12 +176,15 @@ processGameState events gameState =
             gameState { actorStates = Data.IntMap.Lazy.adjust (processActorEvent event) playerId (actorStates gameState) }
             
 processActorEvent event actorState =                          
-  case (event,actorState) of
+  case (event, actorState) of
     (MoveRight, _) -> MovingRight
     (MoveLeft, _) -> MovingLeft
     (Jump, _) -> Jumping
+    (StopJump, _ ) -> Idle
     (CancelRight, _) -> Idle  
     (CancelLeft, _) -> Idle
+    
+
     
 
 
@@ -196,12 +200,27 @@ simulateActor actorStates actorId actorPosition =
               ((Just Jumping), (Position x y)) -> Position x (y-5)
               (_, position) -> position
               
+simulateGameStatePhysics gameState = gameState { physicsState = Data.IntMap.Lazy.mapWithKey (simulateActorAdjustPhysics actorStatesItem) physicsStateItem  }           
+  where actorStatesItem = actorStates gameState
+        physicsStateItem = physicsState gameState
+  
+simulateActorAdjustPhysics :: ActorStates -> Int -> VelocityAcceleration -> VelocityAcceleration
+simulateActorAdjustPhysics actorStates actorId actorPosition =
+  case (Data.IntMap.Lazy.lookup actorId actorStates, actorPosition) of
+              ((Just MovingRight), phys) -> phys {vx = 0.08}
+              ((Just MovingLeft), phys) ->  phys {vx = -0.08}             
+              ((Just Jumping), phys) -> phys {vy = -0.2}
+              ((Just Idle), phys) -> phys {vx = 0}
+              (_, phys) -> phys
 
 
 applyPhysics :: Int -> GameState -> GameState              
-applyPhysics delta gameState = gameState { worldState = Data.IntMap.Lazy.mapWithKey (simulatePhysics delta physicsStateItem) worldStateItem  }
-  where physicsStateItem = physicsState gameState
+applyPhysics delta gameState = gameState { worldState = Data.IntMap.Lazy.mapWithKey (simulatePhysics delta physicsStateItem) worldStateItem, physicsState = physicsStateItem  }
+  where physicsStateItem = applyAcceleration delta $ physicsState gameState
         worldStateItem = worldState gameState
+        
+applyAcceleration :: Int-> PhysicsState -> PhysicsState
+applyAcceleration delta physicsStateItem = Data.IntMap.Lazy.map (\ velocityAcceleration -> velocityAcceleration { vy = (vy velocityAcceleration ) + ((fromIntegral delta) * (ay velocityAcceleration))}) physicsStateItem
         
 simulatePhysics :: Int -> PhysicsState -> Int -> Position -> Position
 simulatePhysics delta physicsData id position = 
