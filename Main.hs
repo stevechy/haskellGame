@@ -51,25 +51,37 @@ type ActorStates = Data.IntMap.Lazy.IntMap ActorState
 
 type DrawAction = Int -> Int -> Graphics.UI.SDL.Types.Surface -> IO ()
 
+bbDrawRect :: Position -> BoundingBox -> Rect
+bbDrawRect pos bb = Rect posx posy (posx + (boxWidth bb)) (posy+(boxHeight bb)) 
+  where posx = (x pos) + (relX bb)
+        posy = (y pos) + (relY bb)
 
 rectRenderer :: RenderingHandler
 rectRenderer key gameState videoSurface = do
   case Data.IntMap.Lazy.lookup key $ worldState gameState of
-    Just (Position x y) -> do
+    Just position -> do
       let red = SDL.Pixel 0xFF0000FF
-      _ <- Graphics.UI.SDL.Primitives.box videoSurface (Rect x y (x+640) (y+10)) red
+      let rad = SDL.Pixel 0xFFF000FF
+      let boundingBox = Data.IntMap.Lazy.lookup key $ boundingBoxState gameState    
+      _ <- case boundingBox of 
+        Just bb -> Graphics.UI.SDL.Primitives.box videoSurface (bbDrawRect position bb) red
+        Nothing -> return False
+      _ <- Graphics.UI.SDL.Primitives.pixel videoSurface (fromIntegral (x position)) (fromIntegral (y position)) rad
       return ()
     _ -> return ()
+  
   
 characterRender :: RenderingHandler
 characterRender key gameState videoSurface = do
   let worldStateElement = worldState gameState
   let graphicsElement = resources gameState
   let red = SDL.Pixel 0xFF0000FF
+  let rad = SDL.Pixel 0xFFF000FF
   let Just (Position x y) = Data.IntMap.Lazy.lookup key worldStateElement
   let Just (image) = Data.IntMap.Lazy.lookup key graphicsElement
   _ <- blitSurface image Nothing videoSurface (Just (Rect x y 101 171))
   _ <- Graphics.UI.SDL.Primitives.rectangle videoSurface (Rect x y (x+101) (y+171)) red 
+  _ <- Graphics.UI.SDL.Primitives.pixel videoSurface (fromIntegral x) (fromIntegral y) rad
   return ();
 
 
@@ -79,8 +91,11 @@ playerId = 1
 floorId :: Int
 floorId = 2
 
+platformId :: Int
+platformId = 3
+
 initialState :: WorldState
-initialState = Data.IntMap.Lazy.fromList [(playerId, Position 5 5), (floorId, Position 0 400)]
+initialState = Data.IntMap.Lazy.fromList [(playerId, Position 5 5), (floorId, Position 0 400), (platformId, Position 500 300)]
 
 initialActorStates :: ActorStates
 initialActorStates = Data.IntMap.Lazy.fromList [(playerId, Idle)]
@@ -89,10 +104,10 @@ initialPhysicsState :: PhysicsState
 initialPhysicsState = Data.IntMap.Lazy.fromList [(playerId, VelocityAcceleration {vx = 0, vy = 0.00, ax = 0, ay = 0.0002})]
 
 initialRenderingHandlers :: RenderingHandlers
-initialRenderingHandlers = Data.IntMap.Lazy.fromList [(floorId, rectRenderer),(playerId, characterRender)] 
+initialRenderingHandlers = Data.IntMap.Lazy.fromList [(floorId, rectRenderer),(platformId, rectRenderer),(playerId, characterRender)] 
 
 initialBoundingBoxState :: BoundingBoxState
-initialBoundingBoxState = Data.IntMap.Lazy.fromList [(playerId, BoundingBox 0 0 101 171), (floorId, BoundingBox 0 0 640 10)]
+initialBoundingBoxState = Data.IntMap.Lazy.fromList [(playerId, BoundingBox 0 0 101 155), (floorId, BoundingBox 0 0 640 10), (platformId, BoundingBox (-25) (-25) 50 50)]
 
 
 loadResources :: IO (GraphicResources)
@@ -102,7 +117,7 @@ loadResources = do
 
 runGame :: IO ()
 runGame = do
-  Just videoSurface <- Graphics.UI.SDL.Video.trySetVideoMode 640 480 32 [ DoubleBuf]
+  Just videoSurface <- Graphics.UI.SDL.Video.trySetVideoMode 800 540 32 [ DoubleBuf]
   resources <- loadResources
   
   let gameState = GameState { worldState = initialState, 
