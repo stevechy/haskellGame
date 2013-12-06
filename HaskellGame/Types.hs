@@ -1,4 +1,4 @@
-module Types where
+module HaskellGame.Types where
 
 import Data.IntMap.Lazy
 
