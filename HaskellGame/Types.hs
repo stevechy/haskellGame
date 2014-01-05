@@ -3,6 +3,7 @@ module HaskellGame.Types where
 import Data.IntMap.Lazy
 
 import Graphics.UI.SDL.Types
+import Graphics.UI.SDL.TTF
 
 
 data Position = Position { x :: Int, y :: Int} deriving Show
@@ -33,7 +34,7 @@ data GameState = GameState { worldState :: WorldState,
                              actorStates :: ActorStates, 
                              physicsState::PhysicsState, 
                              boundingBoxState :: BoundingBoxState,
-                             renderingHandlers :: RenderingHandlers }
+                             renderingHandlers :: RenderingHandlers, font :: Font }
 
 data ActorState = Idle | MovingLeft | MovingRight | Jumping
 

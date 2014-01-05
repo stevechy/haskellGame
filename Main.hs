@@ -8,6 +8,7 @@ import Graphics.UI.SDL.Video
 import Graphics.UI.SDL.Image
 import Graphics.UI.SDL.Keysym as Keysym
 import Graphics.UI.SDL.Primitives
+import Graphics.UI.SDL.TTF
 import Data.List
 import Data.Maybe
 
@@ -57,6 +58,8 @@ loadResources = do
 
 runGame :: IO ()
 runGame = do
+  _ <- Graphics.UI.SDL.TTF.init
+  font <- openFont "Fonts/SourceSansPro-Black.ttf" 20
   Just videoSurface <- Graphics.UI.SDL.Video.trySetVideoMode 800 540 32 [ DoubleBuf]
   resources <- loadResources
   
@@ -65,7 +68,8 @@ runGame = do
                               actorStates = initialActorStates, 
                               physicsState = initialPhysicsState, 
                               boundingBoxState = initialBoundingBoxState,
-                              renderingHandlers = initialRenderingHandlers}
+                              renderingHandlers = initialRenderingHandlers,
+                              font = font}
   
   let eventAction = Graphics.UI.SDL.Events.pollEvent
   let drawAction = drawGame videoSurface 
@@ -132,7 +136,9 @@ drawGame :: Graphics.UI.SDL.Types.Surface -> GameState -> IO ()
 drawGame videoSurface gameState = do  
   let black = SDL.Pixel 0x00000000  
   _ <- Graphics.UI.SDL.Video.fillRect videoSurface Nothing black
-
+  message <- renderTextSolid (font gameState) "Hi" $ Color 255 0 0
+  rect <- getClipRect message
+  _ <- blitSurface message Nothing videoSurface $ Just $ rect { rectX = 50, rectY=50}
   HaskellGame.Rendering.Renderer.drawWorld videoSurface gameState
   _ <- tryFlip videoSurface
   return ()
