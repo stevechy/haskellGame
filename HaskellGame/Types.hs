@@ -36,6 +36,14 @@ data GameState = GameState { worldState :: WorldState,
                              boundingBoxState :: BoundingBoxState,
                              renderingHandlers :: RenderingHandlers, font :: Font }
 
+data MenuState = MenuState {
+        menuPosition :: Integer,
+        menuItems :: [String],
+        menuFont :: Font
+    }
+
+data MenuAction = MoveSelectionUp | MoveSelectionDown | SelectItem
+
 data ActorState = Idle | MovingLeft | MovingRight | Jumping
 
 type ActorStates = Data.IntMap.Lazy.IntMap ActorState

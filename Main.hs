@@ -11,7 +11,7 @@ import Graphics.UI.SDL.Primitives
 import Graphics.UI.SDL.TTF
 import Data.List
 import Data.Maybe
-
+import Control.Monad
 import Data.IntMap.Lazy
 
 import HaskellGame.Types
@@ -62,6 +62,9 @@ runGame = do
   font <- openFont "Fonts/SourceSansPro-Black.ttf" 20
   Just videoSurface <- Graphics.UI.SDL.Video.trySetVideoMode 800 540 32 [ DoubleBuf]
   resources <- loadResources
+
+  let menuState = MenuState { menuPosition = 0, menuItems = ["Start Game","Options"], menuFont = font }
+  runMenu menuState videoSurface
   
   let gameState = GameState { worldState = initialState, 
                               resources = resources, 
@@ -78,6 +81,37 @@ runGame = do
   gameLoop drawAction eventAction gameState initialTicks
   
   return ()
+
+runMenu :: MenuState -> Surface -> IO ()
+runMenu menuState videoSurface = do
+    events <- pollEvents Graphics.UI.SDL.Events.pollEvent []
+    let menuActions = concat $ Data.List.map menuAction events
+    let state = isNothing $ find (\x -> x == Graphics.UI.SDL.Events.Quit) events 
+    let newMenuState = Data.List.foldr processMenuAction menuState menuActions 
+    case state of
+        True -> do 
+            let black = SDL.Pixel 0x00000000  
+            _ <- Graphics.UI.SDL.Video.fillRect videoSurface Nothing black
+            _ <- forM_ (Data.List.zip (menuItems newMenuState) [0,1..]) (\ (menuItem, index) -> do
+                let color = if index == (menuPosition newMenuState) then Color 0 0 255 else Color 255 0 0
+                message <- renderTextSolid (menuFont newMenuState) menuItem color
+                rect <- getClipRect message
+                _ <- blitSurface message Nothing videoSurface $ Just $ rect { rectX = 50, rectY= 50 + (20 * (fromIntegral index))}
+                return ()
+                )
+            _ <- tryFlip videoSurface
+            Graphics.UI.SDL.Time.delay 30
+            runMenu newMenuState videoSurface
+        False -> return ()
+
+processMenuAction :: MenuAction -> MenuState -> MenuState
+processMenuAction menuAction menuState =
+    let menuSize = fromIntegral $ Data.List.length $ menuItems menuState in 
+        case menuAction of
+            MoveSelectionUp -> menuState { menuPosition = (((menuPosition menuState) - 1) + menuSize ) `mod` menuSize } 
+            MoveSelectionDown -> menuState { menuPosition = ((menuPosition menuState) + 1) `mod` menuSize} 
+            _ -> menuState
+    
   
 pollEvents eventAction events = do
   event <- eventAction
@@ -129,16 +163,27 @@ gameAction event = case event of
       _ -> []
   _ -> []   
 
-       
+menuAction :: Graphics.UI.SDL.Events.Event -> [MenuAction]   
+menuAction event = case event of
+  KeyDown keysym -> 
+    case Keysym.symKey keysym of
+      Keysym.SDLK_UP -> [MoveSelectionUp]
+      Keysym.SDLK_DOWN -> [MoveSelectionDown]
+      Keysym.SDLK_RETURN -> [SelectItem]
+      _ -> []
+  KeyUp keysym ->
+    case Keysym.symKey keysym of     
+      _ -> []
+  _ -> []          
 
 
 drawGame :: Graphics.UI.SDL.Types.Surface -> GameState -> IO ()
 drawGame videoSurface gameState = do  
   let black = SDL.Pixel 0x00000000  
   _ <- Graphics.UI.SDL.Video.fillRect videoSurface Nothing black
-  message <- renderTextSolid (font gameState) "Hi" $ Color 255 0 0
+  message <- renderTextSolid (font gameState) "Score" $ Color 255 0 0
   rect <- getClipRect message
-  _ <- blitSurface message Nothing videoSurface $ Just $ rect { rectX = 50, rectY=50}
+  _ <- blitSurface message Nothing videoSurface $ Just $ rect { rectX = 50, rectY=0}
   HaskellGame.Rendering.Renderer.drawWorld videoSurface gameState
   _ <- tryFlip videoSurface
   return ()
