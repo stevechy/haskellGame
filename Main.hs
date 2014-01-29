@@ -54,7 +54,8 @@ initialBoundingBoxState = Data.IntMap.Lazy.fromList [(playerId, BoundingBox 0 0 
 loadResources :: IO (GraphicResources)
 loadResources = do  
   image <- Graphics.UI.SDL.Image.load "lambdaChar.png"
-  return $ Data.IntMap.Lazy.fromList [(playerId, image)]
+  player <- Graphics.UI.SDL.Image.load "Platformer Art Complete Pack_0/Base pack/Player/p1_front.png"
+  return $ Data.IntMap.Lazy.fromList [(7, image), (playerId, player)]
 
 runGame :: IO ()
 runGame = do
@@ -63,7 +64,7 @@ runGame = do
   Just videoSurface <- Graphics.UI.SDL.Video.trySetVideoMode 800 540 32 [ DoubleBuf]
   resources <- loadResources
 
-  let menuState = MenuState { menuPosition = 0, menuItems = ["Start Game","Options"], menuFont = font }
+  let menuState = MenuState { menuPosition = 0, menuItems = ["Start Game","Options","Quit"], menuFont = font }
   runMenu menuState videoSurface
   
   let gameState = GameState { worldState = initialState, 
@@ -86,7 +87,8 @@ runMenu :: MenuState -> Surface -> IO ()
 runMenu menuState videoSurface = do
     events <- pollEvents Graphics.UI.SDL.Events.pollEvent []
     let menuActions = concat $ Data.List.map menuAction events
-    let state = isNothing $ find (\x -> x == Graphics.UI.SDL.Events.Quit) events 
+    let state = (isNothing $ find (\x -> x == Graphics.UI.SDL.Events.Quit) events ) && (isNothing $ find (\x -> x == SelectItem) menuActions) 
+
     let newMenuState = Data.List.foldr processMenuAction menuState menuActions 
     case state of
         True -> do 
@@ -94,7 +96,7 @@ runMenu menuState videoSurface = do
             _ <- Graphics.UI.SDL.Video.fillRect videoSurface Nothing black
             _ <- forM_ (Data.List.zip (menuItems newMenuState) [0,1..]) (\ (menuItem, index) -> do
                 let color = if index == (menuPosition newMenuState) then Color 0 0 255 else Color 255 0 0
-                message <- renderTextSolid (menuFont newMenuState) menuItem color
+                message <- renderTextBlended (menuFont newMenuState) menuItem color
                 rect <- getClipRect message
                 _ <- blitSurface message Nothing videoSurface $ Just $ rect { rectX = 50, rectY= 50 + (20 * (fromIntegral index))}
                 return ()
@@ -181,7 +183,7 @@ drawGame :: Graphics.UI.SDL.Types.Surface -> GameState -> IO ()
 drawGame videoSurface gameState = do  
   let black = SDL.Pixel 0x00000000  
   _ <- Graphics.UI.SDL.Video.fillRect videoSurface Nothing black
-  message <- renderTextSolid (font gameState) "Score" $ Color 255 0 0
+  message <- renderTextBlended (font gameState) "Score" $ Color 255 0 0
   rect <- getClipRect message
   _ <- blitSurface message Nothing videoSurface $ Just $ rect { rectX = 50, rectY=0}
   HaskellGame.Rendering.Renderer.drawWorld videoSurface gameState

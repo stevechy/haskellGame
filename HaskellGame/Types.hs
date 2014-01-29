@@ -40,9 +40,9 @@ data MenuState = MenuState {
         menuPosition :: Integer,
         menuItems :: [String],
         menuFont :: Font
-    }
+    } deriving (Eq)
 
-data MenuAction = MoveSelectionUp | MoveSelectionDown | SelectItem
+data MenuAction = MoveSelectionUp | MoveSelectionDown | SelectItem deriving (Eq, Show)
 
 data ActorState = Idle | MovingLeft | MovingRight | Jumping
 
