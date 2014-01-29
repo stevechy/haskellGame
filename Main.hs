@@ -15,6 +15,7 @@ import Control.Monad
 import Data.IntMap.Lazy
 
 import HaskellGame.Types
+import HaskellGame.Game
 
 import qualified HaskellGame.Physics.Simulator
 import qualified HaskellGame.Physics.CollisionDetector
@@ -67,13 +68,14 @@ runGame = do
   let menuState = MenuState { menuPosition = 0, menuItems = ["Start Game","Options","Quit"], menuFont = font }
   runMenu menuState videoSurface
   
-  let gameState = GameState { worldState = initialState, 
+  let gameState = initializeGameState $ GameState { worldState = initialState, 
                               resources = resources, 
                               actorStates = initialActorStates, 
                               physicsState = initialPhysicsState, 
                               boundingBoxState = initialBoundingBoxState,
                               renderingHandlers = initialRenderingHandlers,
                               font = font}
+  
   
   let eventAction = Graphics.UI.SDL.Events.pollEvent
   let drawAction = drawGame videoSurface 
@@ -82,6 +84,9 @@ runGame = do
   gameLoop drawAction eventAction gameState initialTicks
   
   return ()
+
+initializeGameState gameState = 
+    insertComponents 99 [CollisionComponent (BoundingBox 0 0 10 10), PositionComponent (Position 300 5),  RenderingComponent HaskellGame.Rendering.Renderer.rectRenderer ] gameState
 
 runMenu :: MenuState -> Surface -> IO ()
 runMenu menuState videoSurface = do
