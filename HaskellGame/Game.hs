@@ -14,6 +14,6 @@ insertComponent identifier gameComponent gameState =
         PhysicsComponent p -> gameState { physicsState = insert identifier p $ physicsState gameState}
         RenderingComponent r -> gameState { renderingHandlers = insert identifier r $ renderingHandlers gameState}
 
-insertComponents  :: GameEntityIdentifier -> [GameComponent] -> GameState -> GameState
-insertComponents identifier gameComponents gameState = Data.List.foldl' (\ gs gc -> insertComponent identifier gc gs) gameState gameComponents
+insertEntity  :: GameEntityIdentifier -> [GameComponent] -> GameState -> GameState
+insertEntity identifier gameComponents gameState = Data.List.foldl' (\ gs gc -> insertComponent identifier gc gs) gameState gameComponents
 

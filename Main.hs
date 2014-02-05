@@ -7,8 +7,8 @@ import Graphics.UI.SDL.Time
 import Graphics.UI.SDL.Video
 import Graphics.UI.SDL.Image
 import Graphics.UI.SDL.Keysym as Keysym
-import Graphics.UI.SDL.Primitives
 import Graphics.UI.SDL.TTF
+import GHC.Word
 import Data.List
 import Data.Maybe
 import Control.Monad
@@ -85,8 +85,9 @@ runGame = do
   
   return ()
 
+initializeGameState :: GameState -> GameState
 initializeGameState gameState = 
-    insertComponents 99 [CollisionComponent (BoundingBox 0 0 10 10), PositionComponent (Position 300 5),  RenderingComponent HaskellGame.Rendering.Renderer.rectRenderer ] gameState
+    insertEntity 99 [CollisionComponent (BoundingBox 0 0 10 10), PositionComponent (Position 300 5),  RenderingComponent HaskellGame.Rendering.Renderer.rectRenderer ] gameState
 
 runMenu :: MenuState -> Surface -> IO ()
 runMenu menuState videoSurface = do
@@ -119,30 +120,32 @@ processMenuAction menuAction menuState =
             MoveSelectionDown -> menuState { menuPosition = ((menuPosition menuState) + 1) `mod` menuSize} 
             _ -> menuState
     
-  
+pollEvents :: IO (Event) -> [Event] -> IO [Event]  
 pollEvents eventAction events = do
   event <- eventAction
   case event of
     NoEvent -> return events
     ev -> pollEvents eventAction (ev:events)
   
+gameLoop :: (GameState -> IO t) -> IO Event -> GameState -> GHC.Word.Word32 -> IO ()
 gameLoop drawAction eventAction gameState lastFrameTicks = do
  
   events <- pollEvents eventAction []
-  let gameEvents = concat $ Data.List.map gameAction events
+  let gameEvents = GameEventQueues { gameActions = concat $ Data.List.map (playerGameAction playerId) events,
+                                  physicsActions = [] }
   
   let state = isNothing $ find (\x -> x == Graphics.UI.SDL.Events.Quit) events 
   
   currentTicks <- Graphics.UI.SDL.Time.getTicks
   
-  let delay = fromIntegral $ currentTicks - lastFrameTicks
+  let frameDelay = fromIntegral $ currentTicks - lastFrameTicks
    
-  let finalState = 
-        Data.List.foldl' ( \ gameState gameStep -> gameStep gameState) gameState 
-                   [ (HaskellGame.Gameplay.Simulator.processGameState gameEvents playerId), 
-                     HaskellGame.Physics.Simulator.simulateGameStatePhysics, 
-                     HaskellGame.Physics.Simulator.applyPhysics delay, 
-                     HaskellGame.Physics.CollisionDetector.detectAndResolveCollisions delay
+  let (finalState, finalQueues) = 
+        Data.List.foldl' ( \ gameState gameStep -> gameStep gameState) (gameState, gameEvents) 
+                   [ HaskellGame.Gameplay.Simulator.processGameStateOutputEvents, 
+                     HaskellGame.Physics.Simulator.applyPhysicsChanges, 
+                     HaskellGame.Physics.Simulator.applyPhysics frameDelay, 
+                     HaskellGame.Physics.CollisionDetector.detectAndResolveCollisions frameDelay
                    ]        
   
   
@@ -153,6 +156,9 @@ gameLoop drawAction eventAction gameState lastFrameTicks = do
       Graphics.UI.SDL.Time.delay 30
       gameLoop drawAction eventAction finalState currentTicks
     False -> return ()
+
+playerGameAction :: GameEntityIdentifier -> Graphics.UI.SDL.Events.Event -> [GameEvent GameAction]   
+playerGameAction entityId =  (Data.List.map (\ev -> GameEvent { identifier = entityId, gameEvent =  ev})) . gameAction 
     
 gameAction :: Graphics.UI.SDL.Events.Event -> [GameAction]   
 gameAction event = case event of

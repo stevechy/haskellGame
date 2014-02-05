@@ -25,15 +25,15 @@ collides ((idA,bbA,posA),(idB,bbB,posB)) = ((xa1 <= xb1 && xb1 <= xa2) || (xb1 <
         yb1 = (y posB) + (relY bbB)
         yb2 = yb1 + (boxHeight bbB)
 
-detectAndResolveCollisions :: Int -> GameState -> GameState
-detectAndResolveCollisions delta gameState = Data.List.foldl' respondToCollision gameState (collisions gameState)
+detectAndResolveCollisions :: Int -> (GameState, GameEventQueues) -> (GameState, GameEventQueues)
+detectAndResolveCollisions delta (gameState, eventQueues) = (Data.List.foldl' respondToCollision gameState (collisions gameState), eventQueues)
                                              
 respondToCollision gameStateSeed  ((idA,bbA,posA),(idB,bbB, posB)) 
   | movable idA gameStateSeed = gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (\phys -> phys { vy = 0})  idA (physicsState gameStateSeed) }
   | movable idB gameStateSeed = gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (\phys -> phys { vy = 0})  idB (physicsState gameStateSeed) }
   | True = gameStateSeed
 
-movable id gameState = member id $ actorStates gameState
+movable ident gameState = member ident $ actorStates gameState
   
 collisions :: GameState -> [(CollisionUnit, CollisionUnit)]
 collisions gameState =   

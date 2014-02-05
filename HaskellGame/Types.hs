@@ -30,15 +30,26 @@ type CollisionUnit = (GameEntityIdentifier, BoundingBox, Position)
 
 data GameAction = MoveLeft | MoveRight | Jump | StopJump | CancelLeft | CancelRight deriving (Show, Eq)
 
+data PhysicsAction = Impulse { impulseVx::Double, impulseVy::Double }
+
+data GameEvent event = GameEvent { identifier :: GameEntityIdentifier, gameEvent :: event }
+
 data GameState = GameState { worldState :: WorldState, 
                              resources :: GraphicResources, 
                              actorStates :: ActorStates, 
                              physicsState::PhysicsState, 
                              boundingBoxState :: BoundingBoxState,
-                             renderingHandlers :: RenderingHandlers, font :: Font }
+                             renderingHandlers :: RenderingHandlers, 
+                             font :: Font }
+
+
 
 data GameComponent = PositionComponent Position | CollisionComponent BoundingBox | PhysicsComponent VelocityAcceleration | RenderingComponent RenderingHandler
 
+data GameEventQueues = GameEventQueues {
+    gameActions :: [GameEvent GameAction],
+    physicsActions :: [GameEvent PhysicsAction]
+}
 
 data MenuState = MenuState {
         menuPosition :: Integer,
@@ -48,7 +59,7 @@ data MenuState = MenuState {
 
 data MenuAction = MoveSelectionUp | MoveSelectionDown | SelectItem deriving (Eq, Show)
 
-data ActorState = Idle | MovingLeft | MovingRight | Jumping
+data ActorState = Idle | MovingLeft | MovingRight | Jumping | JumpFall
 
 type ActorStates = Data.IntMap.Lazy.IntMap ActorState
 
