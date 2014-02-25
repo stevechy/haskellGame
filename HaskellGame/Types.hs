@@ -7,7 +7,7 @@ import Graphics.UI.SDL.TTF
 
 type GameEntityIdentifier = Int
 
-data Position = Position { x :: Int, y :: Int} deriving Show
+data Position = Position { _x :: Int, _y :: Int} deriving Show
 
 
 data VelocityAcceleration = VelocityAcceleration { vx::Double, vy::Double, ax::Double, ay::Double}
@@ -24,7 +24,13 @@ type RenderingHandler = GameEntityIdentifier -> GameState -> Surface -> IO ()
 
 type RenderingHandlers = Data.IntMap.Lazy.IntMap RenderingHandler
 
-type GraphicResources = Data.IntMap.Lazy.IntMap Graphics.UI.SDL.Types.Surface
+type Animator = GameState -> Int -> IO ()
+
+type Animators = Data.IntMap.Lazy.IntMap Animator
+
+type GraphicResources = Data.IntMap.Lazy.IntMap GraphicResource
+
+data GraphicResource = Image Graphics.UI.SDL.Types.Surface | ImageSet [Graphics.UI.SDL.Types.Surface] 
 
 type CollisionUnit = (GameEntityIdentifier, BoundingBox, Position)
 
@@ -32,15 +38,15 @@ data GameAction = MoveLeft | MoveRight | Jump | StopJump | CancelLeft | CancelRi
 
 data PhysicsAction = Impulse { impulseVx::Double, impulseVy::Double }
 
-data GameEvent event = GameEvent { identifier :: GameEntityIdentifier, gameEvent :: event }
+data GameEvent event = GameEvent { _identifier :: GameEntityIdentifier, _gameEvent :: event }
 
 data GameState = GameState { worldState :: WorldState, 
-                             resources :: GraphicResources, 
+                             _resources :: GraphicResources, 
                              actorStates :: ActorStates, 
                              physicsState::PhysicsState, 
                              boundingBoxState :: BoundingBoxState,
                              renderingHandlers :: RenderingHandlers, 
-                             font :: Font }
+                             _font :: Font }
 
 
 

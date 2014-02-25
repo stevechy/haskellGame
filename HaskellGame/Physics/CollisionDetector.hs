@@ -3,7 +3,6 @@ module HaskellGame.Physics.CollisionDetector where
 import HaskellGame.Types
 
 import Data.List
-import Data.Maybe
 
 import Data.IntMap.Lazy
 
@@ -16,13 +15,13 @@ boundingBoxList gameState = foldrWithKey bbWithPosition [] $ boundingBoxState ga
           
 collides :: (CollisionUnit, CollisionUnit) -> Bool
 collides ((idA,bbA,posA),(idB,bbB,posB)) = ((xa1 <= xb1 && xb1 <= xa2) || (xb1 <= xa1 && xa1 <= xb2)) && ((ya1 <= yb1 && yb1 <= ya2) || (yb1 <= ya1 && ya1 <= yb2))
-  where xa1 = (x posA) +  (relX bbA)
+  where xa1 = (_x posA) +  (relX bbA)
         xa2 = xa1 + (boxWidth bbA)
-        xb1 = (x posB) + (relX bbB)
+        xb1 = (_x posB) + (relX bbB)
         xb2 = xb1 + (boxWidth bbB)
-        ya1 = (y posA) + (relY bbA)
+        ya1 = (_y posA) + (relY bbA)
         ya2 = ya1 + (boxHeight bbA)
-        yb1 = (y posB) + (relY bbB)
+        yb1 = (_y posB) + (relY bbB)
         yb2 = yb1 + (boxHeight bbB)
 
 detectAndResolveCollisions :: Int -> (GameState, GameEventQueues) -> (GameState, GameEventQueues)

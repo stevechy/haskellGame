@@ -13,7 +13,7 @@ applyPhysicsChange :: [GameEvent PhysicsAction] -> GameEntityIdentifier -> Veloc
 applyPhysicsChange events ident velAccel = Data.List.foldr (\velAccel gameEvent -> applyPhysicsEvent ident gameEvent velAccel ) (velAccel)  events
 
 applyPhysicsEvent :: GameEntityIdentifier -> VelocityAcceleration -> GameEvent PhysicsAction -> VelocityAcceleration
-applyPhysicsEvent ident velAccel gameEv = if ident == (identifier gameEv) then velAccel { vx = (vx velAccel) + (impulseVx (gameEvent gameEv)), vy = (vy velAccel) + (impulseVy (gameEvent gameEv))} else velAccel
+applyPhysicsEvent ident velAccel gameEv = if ident == (_identifier gameEv) then velAccel { vx = (vx velAccel) + (impulseVx (_gameEvent gameEv)), vy = (vy velAccel) + (impulseVy (_gameEvent gameEv))} else velAccel
 
 simulateGameStatePhysics :: (GameState, GameEventQueues) -> (GameState, GameEventQueues)
 simulateGameStatePhysics (gameState, eventQueues) = (gameState { physicsState = Data.IntMap.Lazy.mapWithKey (simulateActorAdjustPhysics actorStatesItem) physicsStateItem  } ,eventQueues)           
