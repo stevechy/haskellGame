@@ -1,6 +1,7 @@
 module HaskellGame.Types where
 
 import Data.IntMap.Lazy
+import qualified Data.Array
 
 import Graphics.UI.SDL.Types
 import Graphics.UI.SDL.TTF
@@ -30,7 +31,7 @@ type Animators = Data.IntMap.Lazy.IntMap Animator
 
 type GraphicResources = Data.IntMap.Lazy.IntMap GraphicResource
 
-data GraphicResource = Image Graphics.UI.SDL.Types.Surface | ImageSet [Graphics.UI.SDL.Types.Surface] 
+data GraphicResource = Image Graphics.UI.SDL.Types.Surface | ImageSet (Data.Array.Array Int Graphics.UI.SDL.Types.Surface) 
 
 type CollisionUnit = (GameEntityIdentifier, BoundingBox, Position)
 

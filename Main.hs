@@ -34,14 +34,13 @@ floorId = 2
 platformId :: Int
 platformId = 3
 
+
+walkCycleId :: Int
+walkCycleId = 4
+
 initialState :: WorldState
-initialState = Data.IntMap.Lazy.fromList [(floorId, Position 0 400), (platformId, Position 500 300)]
-
-initialActorStates :: ActorStates
-initialActorStates = Data.IntMap.Lazy.fromList []
-
-initialPhysicsState :: PhysicsState
-initialPhysicsState = Data.IntMap.Lazy.fromList []
+initialState = Data.IntMap.Lazy.fromList [(floorId, Position 0 400), 
+                                              (platformId, Position 500 300)]
 
 initialRenderingHandlers :: RenderingHandlers
 initialRenderingHandlers = Data.IntMap.Lazy.fromList [(floorId, HaskellGame.Rendering.Renderer.rectRenderer),
@@ -58,15 +57,15 @@ runGame = do
   _ <- Graphics.UI.SDL.TTF.init
   font <- openFont "Fonts/SourceSansPro-Black.ttf" 20
   Just videoSurface <- Graphics.UI.SDL.Video.trySetVideoMode 800 540 32 [ Graphics.UI.SDL.DoubleBuf]
-  resources <- HaskellGame.Resources.ResourceManager.loadResources playerId
+  resources <- HaskellGame.Resources.ResourceManager.loadResources playerId walkCycleId
 
   let menuState = MenuState { menuPosition = 0, menuItems = ["Start Game","Options","Quit"], menuFont = font }
   HaskellGame.Menu.Manager.runMenu menuState videoSurface
   
   let gameState = initializeGameState $ GameState { worldState = initialState, 
                               _resources = resources, 
-                              actorStates = initialActorStates, 
-                              physicsState = initialPhysicsState, 
+                              actorStates = Data.IntMap.Lazy.empty, 
+                              physicsState = Data.IntMap.Lazy.empty, 
                               boundingBoxState = initialBoundingBoxState,
                               renderingHandlers = initialRenderingHandlers,
                               _font = font}
@@ -89,7 +88,7 @@ initializeGameState gameState =
                                                     toComponent $ VelocityAcceleration {vx = 0, vy = 0.00, ax = 0, ay = 0.0002},
                                                     toComponent $ BoundingBox 0 0 66 92,
                                                     toComponent $ Idle,
-                                                    toComponent $ HaskellGame.Rendering.Renderer.characterRender
+                                                    toComponent $ HaskellGame.Rendering.Renderer.animatedRender
                                                     ]
                              ] 
 

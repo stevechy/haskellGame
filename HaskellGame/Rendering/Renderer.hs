@@ -6,6 +6,7 @@ import Graphics.UI.SDL.Video
 import Graphics.UI.SDL.Types
 import Graphics.UI.SDL.TTF
 import Data.IntMap.Lazy
+import qualified Data.Array
 import HaskellGame.Types
 
 drawWorld  :: Graphics.UI.SDL.Types.Surface -> GameState -> IO ()
@@ -35,12 +36,11 @@ characterRender :: RenderingHandler
 characterRender key gameState videoSurface = do
   let worldStateElement = worldState gameState
   let graphicsElement = _resources gameState
-  let boundingBox = boundingBoxState gameState
   let red = SDL.Pixel 0xFF0000FF
   let rad = SDL.Pixel 0xFFF000FF
   let Just (Position x y) = Data.IntMap.Lazy.lookup key worldStateElement
-  let Just (Image image) = Data.IntMap.Lazy.lookup key graphicsElement
-  let Just (BoundingBox 0 0 w h) = Data.IntMap.Lazy.lookup key boundingBox
+  let Just (Image image) = Data.IntMap.Lazy.lookup key graphicsElement 
+  let Just (BoundingBox 0 0 w h) = Data.IntMap.Lazy.lookup key $ boundingBoxState gameState  
   _ <- blitSurface image Nothing videoSurface (Just (Rect x y w h))
   _ <- Graphics.UI.SDL.Primitives.rectangle videoSurface (Rect x y (x+w) (y+h)) red 
   _ <- Graphics.UI.SDL.Primitives.pixel videoSurface (fromIntegral x) (fromIntegral y) rad
@@ -53,9 +53,10 @@ animatedRender key gameState videoSurface = do
   let red = SDL.Pixel 0xFF0000FF
   let rad = SDL.Pixel 0xFFF000FF
   let Just (Position x y) = Data.IntMap.Lazy.lookup key worldStateElement
-  let Just (Image image) = Data.IntMap.Lazy.lookup key graphicsElement
-  _ <- blitSurface image Nothing videoSurface (Just (Rect x y 101 171))
-  _ <- Graphics.UI.SDL.Primitives.rectangle videoSurface (Rect x y (x+101) (y+171)) red 
+  let Just (ImageSet imageSet) = Data.IntMap.Lazy.lookup key graphicsElement
+  let Just (BoundingBox 0 0 w h) = Data.IntMap.Lazy.lookup key $ boundingBoxState gameState 
+  _ <- blitSurface (imageSet Data.Array.! 0) Nothing videoSurface (Just (Rect x y w h))  
+  _ <- Graphics.UI.SDL.Primitives.rectangle videoSurface (Rect x y (x+w) (y+h)) red 
   _ <- Graphics.UI.SDL.Primitives.pixel videoSurface (fromIntegral x) (fromIntegral y) rad
   return ();
 
