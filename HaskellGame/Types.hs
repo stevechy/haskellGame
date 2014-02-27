@@ -50,7 +50,7 @@ data GameState = GameState { worldState :: WorldState,
 
 
 
-data GameComponent = PositionComponent Position | CollisionComponent BoundingBox | PhysicsComponent VelocityAcceleration | RenderingComponent RenderingHandler
+
 
 data GameEventQueues = GameEventQueues {
     gameActions :: [GameEvent GameAction],

@@ -10,7 +10,7 @@ applyPhysicsChanges (gameState, eventQueues) = (gameState { physicsState = Data.
           physicsStateItem = physicsState gameState
 
 applyPhysicsChange :: [GameEvent PhysicsAction] -> GameEntityIdentifier -> VelocityAcceleration -> VelocityAcceleration
-applyPhysicsChange events ident velAccel = Data.List.foldr (\velAccel gameEvent -> applyPhysicsEvent ident gameEvent velAccel ) (velAccel)  events
+applyPhysicsChange events ident velAcceleration = Data.List.foldr (\velAccel gameEvent -> applyPhysicsEvent ident gameEvent velAccel ) (velAcceleration)  events
 
 applyPhysicsEvent :: GameEntityIdentifier -> VelocityAcceleration -> GameEvent PhysicsAction -> VelocityAcceleration
 applyPhysicsEvent ident velAccel gameEv = if ident == (_identifier gameEv) then velAccel { vx = (vx velAccel) + (impulseVx (_gameEvent gameEv)), vy = (vy velAccel) + (impulseVy (_gameEvent gameEv))} else velAccel
@@ -41,5 +41,5 @@ applyAcceleration delta physicsStateItem = Data.IntMap.Lazy.map (\ velocityAccel
 simulatePhysics :: Int -> PhysicsState -> Int -> Position -> Position
 simulatePhysics delta physicsData identifier position = 
   case (Data.IntMap.Lazy.lookup identifier physicsData, position) of
-       ((Just (VelocityAcceleration {vx = xvel, vy = yvel, ax = xaccel, ay = yaccel})), Position x y) -> Position (x + truncate (xvel * fromIntegral delta)) (y+ truncate (yvel * fromIntegral delta))
-       (state, position) -> position
+       ((Just (VelocityAcceleration {vx = xvel, vy = yvel})), Position x y) -> Position (x + truncate (xvel * fromIntegral delta)) (y+ truncate (yvel * fromIntegral delta))
+       (_, pos) -> pos

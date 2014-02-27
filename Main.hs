@@ -35,21 +35,21 @@ platformId :: Int
 platformId = 3
 
 initialState :: WorldState
-initialState = Data.IntMap.Lazy.fromList [(playerId, Position 5 5), (floorId, Position 0 400), (platformId, Position 500 300)]
+initialState = Data.IntMap.Lazy.fromList [(floorId, Position 0 400), (platformId, Position 500 300)]
 
 initialActorStates :: ActorStates
-initialActorStates = Data.IntMap.Lazy.fromList [(playerId, Idle)]
+initialActorStates = Data.IntMap.Lazy.fromList []
 
 initialPhysicsState :: PhysicsState
-initialPhysicsState = Data.IntMap.Lazy.fromList [(playerId, VelocityAcceleration {vx = 0, vy = 0.00, ax = 0, ay = 0.0002})]
+initialPhysicsState = Data.IntMap.Lazy.fromList []
 
 initialRenderingHandlers :: RenderingHandlers
 initialRenderingHandlers = Data.IntMap.Lazy.fromList [(floorId, HaskellGame.Rendering.Renderer.rectRenderer),
-                                                          (platformId, HaskellGame.Rendering.Renderer.rectRenderer),
-                                                          (playerId, HaskellGame.Rendering.Renderer.characterRender)] 
+                                                          (platformId, HaskellGame.Rendering.Renderer.rectRenderer)
+                                                          ] 
 
 initialBoundingBoxState :: BoundingBoxState
-initialBoundingBoxState = Data.IntMap.Lazy.fromList [(playerId, BoundingBox 0 0 101 155), (floorId, BoundingBox 0 0 640 10), (platformId, BoundingBox (-25) (-25) 50 50)]
+initialBoundingBoxState = Data.IntMap.Lazy.fromList [(floorId, BoundingBox 0 0 640 10), (platformId, BoundingBox (-25) (-25) 50 50)]
 
 
 
@@ -82,7 +82,16 @@ runGame = do
 
 initializeGameState :: GameState -> GameState
 initializeGameState gameState = 
-    insertEntity 99 [CollisionComponent (BoundingBox 0 0 10 10), PositionComponent (Position 300 5),  RenderingComponent HaskellGame.Rendering.Renderer.rectRenderer ] gameState
+    insertEntities gameState [GameEntity 99 [toComponent (BoundingBox 0 0 10 10), 
+                                              toComponent (Position 300 5),
+                                              toComponent HaskellGame.Rendering.Renderer.rectRenderer ],
+                              GameEntity playerId [toComponent $ Position 5 5,
+                                                    toComponent $ VelocityAcceleration {vx = 0, vy = 0.00, ax = 0, ay = 0.0002},
+                                                    toComponent $ BoundingBox 0 0 66 92,
+                                                    toComponent $ Idle,
+                                                    toComponent $ HaskellGame.Rendering.Renderer.characterRender
+                                                    ]
+                             ] 
 
 
 

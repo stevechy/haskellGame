@@ -1,9 +1,35 @@
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 module HaskellGame.Game where
 
 import HaskellGame.Types
 
 import Data.IntMap.Lazy
 import qualified Data.List
+
+
+
+data GameComponent = PositionComponent Position | CollisionComponent BoundingBox | PhysicsComponent VelocityAcceleration | RenderingComponent RenderingHandler | ActorComponent ActorState
+
+class GameComponentStore a where
+    toComponent :: a -> GameComponent
+
+instance GameComponentStore Position where
+    toComponent = PositionComponent 
+
+instance GameComponentStore BoundingBox where
+    toComponent = CollisionComponent 
+
+instance GameComponentStore VelocityAcceleration where
+    toComponent = PhysicsComponent 
+
+instance GameComponentStore RenderingHandler where
+    toComponent = RenderingComponent 
+
+instance GameComponentStore ActorState where
+    toComponent = ActorComponent 
+
+
+data GameEntity = GameEntity GameEntityIdentifier [GameComponent]
 
 insertComponent :: GameEntityIdentifier -> GameComponent -> GameState -> GameState
 
@@ -13,7 +39,11 @@ insertComponent identifier gameComponent gameState =
         CollisionComponent c -> gameState { boundingBoxState = insert identifier c $ boundingBoxState gameState}
         PhysicsComponent p -> gameState { physicsState = insert identifier p $ physicsState gameState}
         RenderingComponent r -> gameState { renderingHandlers = insert identifier r $ renderingHandlers gameState}
+        ActorComponent a -> gameState { actorStates = insert identifier a $ actorStates gameState}
 
-insertEntity  :: GameEntityIdentifier -> [GameComponent] -> GameState -> GameState
-insertEntity identifier gameComponents gameState = Data.List.foldl' (\ gs gc -> insertComponent identifier gc gs) gameState gameComponents
+insertEntity  :: GameState -> GameEntity -> GameState
+insertEntity gameState (GameEntity identifier gameComponents)  = Data.List.foldl' (\ gs gc -> insertComponent identifier gc gs) gameState gameComponents
+
+insertEntities :: GameState -> [GameEntity] -> GameState
+insertEntities gameState gameEntities = Data.List.foldl' (\ gs gameEntity -> insertEntity gs gameEntity) gameState gameEntities
 
