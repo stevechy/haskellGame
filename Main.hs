@@ -50,6 +50,8 @@ runGame = do
   let menuState = MenuState { menuPosition = 0, menuItems = ["Start Game","Options","Quit"], menuFont = font }
   HaskellGame.Menu.Manager.runMenu menuState videoSurface
   
+  initialTicks <- Graphics.UI.SDL.Time.getTicks
+
   let gameState = initializeGameState $ GameState { worldState = Data.IntMap.Lazy.empty, 
                               _resources = resources, 
                               actorStates = Data.IntMap.Lazy.empty, 
@@ -62,7 +64,7 @@ runGame = do
   
   let eventAction = Graphics.UI.SDL.Events.pollEvent
   let drawAction = HaskellGame.Rendering.Renderer.drawGame videoSurface 
-  initialTicks <- Graphics.UI.SDL.Time.getTicks
+  
     
   gameLoop drawAction eventAction gameState initialTicks
   
@@ -77,7 +79,8 @@ initializeGameState gameState =
                                                     toComponent $ VelocityAcceleration {vx = 0, vy = 0.00, ax = 0, ay = 0.0002},
                                                     toComponent $ BoundingBox 0 0 66 92,
                                                     toComponent $ Idle,
-                                                    toComponent $ HaskellGame.Rendering.Renderer.animatedRender
+                                                    toComponent $ HaskellGame.Rendering.Renderer.animatedRender,
+                                                    toComponent $ AnimationClip {_resourceId = playerId, _startTime = 0, _rate = 125}
                                                     ],
                               GameEntity floorId  [toComponent $ Position 0 400,
                                                      toComponent $ HaskellGame.Rendering.Renderer.rectRenderer,

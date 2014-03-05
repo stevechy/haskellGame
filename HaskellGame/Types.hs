@@ -25,9 +25,9 @@ type RenderingHandler = GameEntityIdentifier -> GameState -> Surface -> IO ()
 
 type RenderingHandlers = Data.IntMap.Lazy.IntMap RenderingHandler
 
-data PlayingClip = PlayingClip { _clipId :: GameEntityIdentifier , startTime :: Int }
+data AnimationClip = AnimationClip { _resourceId :: GameEntityIdentifier , _startTime :: Int, _rate :: Int }
 
-type AnimationStates = Data.IntMap.Lazy.IntMap PlayingClip
+type AnimationStates = Data.IntMap.Lazy.IntMap AnimationClip
 
 type GraphicResources = Data.IntMap.Lazy.IntMap GraphicResource
 

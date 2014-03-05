@@ -8,7 +8,12 @@ import qualified Data.List
 
 
 
-data GameComponent = PositionComponent Position | CollisionComponent BoundingBox | PhysicsComponent VelocityAcceleration | RenderingComponent RenderingHandler | ActorComponent ActorState
+data GameComponent = PositionComponent Position 
+                       | CollisionComponent BoundingBox 
+                       | PhysicsComponent VelocityAcceleration 
+                       | RenderingComponent RenderingHandler 
+                       | ActorComponent ActorState
+                       | AnimationComponent AnimationClip
 
 class GameComponentStore a where
     toComponent :: a -> GameComponent
@@ -28,6 +33,9 @@ instance GameComponentStore RenderingHandler where
 instance GameComponentStore ActorState where
     toComponent = ActorComponent 
 
+instance GameComponentStore AnimationClip where
+    toComponent = AnimationComponent 
+
 
 data GameEntity = GameEntity GameEntityIdentifier [GameComponent]
 
@@ -40,6 +48,7 @@ insertComponent identifier gameComponent gameState =
         PhysicsComponent p -> gameState { physicsState = insert identifier p $ physicsState gameState}
         RenderingComponent r -> gameState { renderingHandlers = insert identifier r $ renderingHandlers gameState}
         ActorComponent a -> gameState { actorStates = insert identifier a $ actorStates gameState}
+        AnimationComponent a -> gameState { _animationStates = insert identifier a $ _animationStates gameState}
 
 insertEntity  :: GameState -> GameEntity -> GameState
 insertEntity gameState (GameEntity identifier gameComponents)  = Data.List.foldl' (\ gs gc -> insertComponent identifier gc gs) gameState gameComponents

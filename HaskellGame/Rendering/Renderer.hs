@@ -5,6 +5,7 @@ import Graphics.UI.SDL.Primitives
 import Graphics.UI.SDL.Video
 import Graphics.UI.SDL.Types
 import Graphics.UI.SDL.TTF
+import Graphics.UI.SDL.Time
 import Data.IntMap.Lazy
 import qualified Data.Array
 import HaskellGame.Types
@@ -53,9 +54,13 @@ animatedRender key gameState videoSurface = do
   let red = SDL.Pixel 0xFF0000FF
   let rad = SDL.Pixel 0xFFF000FF
   let Just (Position x y) = Data.IntMap.Lazy.lookup key worldStateElement
+  let Just (AnimationClip {_startTime = startTime, _rate = rate}) = Data.IntMap.Lazy.lookup key $ _animationStates gameState
+  currentTicks <- Graphics.UI.SDL.Time.getTicks 
+  let currentTime = (fromIntegral $ currentTicks) - startTime
   let Just (ImageSet imageSet) = Data.IntMap.Lazy.lookup key graphicsElement
   let Just (BoundingBox 0 0 w h) = Data.IntMap.Lazy.lookup key $ boundingBoxState gameState 
-  _ <- blitSurface (imageSet Data.Array.! 0) Nothing videoSurface (Just (Rect x y w h))  
+  let frameNumber = (currentTime `quot` rate) `rem`  ((snd $ Data.Array.bounds imageSet) + 1)
+  _ <- blitSurface (imageSet Data.Array.! frameNumber)  Nothing videoSurface (Just (Rect x y w h))  
   _ <- Graphics.UI.SDL.Primitives.rectangle videoSurface (Rect x y (x+w) (y+h)) red 
   _ <- Graphics.UI.SDL.Primitives.pixel videoSurface (fromIntegral x) (fromIntegral y) rad
   return ();
