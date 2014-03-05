@@ -16,6 +16,7 @@ processEvent event (gameState, events)  =
 processGameStateOutputEvents :: (GameState, GameEventQueues) -> (GameState, GameEventQueues)
 processGameStateOutputEvents (gameState, events) = Data.List.foldr processActorOutputEvents (gameState,events) (gameActions events)                
 
+processActorEvent :: GameAction -> t -> ActorState
 processActorEvent event actorState =                          
   case (event, actorState) of
     (MoveRight, _) -> MovingRight

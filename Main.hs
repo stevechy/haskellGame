@@ -4,7 +4,6 @@ import qualified Graphics.UI.SDL
 import Graphics.UI.SDL.Events 
 import Graphics.UI.SDL.Time
 import Graphics.UI.SDL.Video
-import Graphics.UI.SDL.Keysym as Keysym
 import Graphics.UI.SDL.TTF
 import GHC.Word
 import Data.List
@@ -38,19 +37,8 @@ platformId = 3
 walkCycleId :: Int
 walkCycleId = 4
 
-initialState :: WorldState
-initialState = Data.IntMap.Lazy.fromList [(floorId, Position 0 400), 
-                                              (platformId, Position 500 300)]
-
-initialRenderingHandlers :: RenderingHandlers
-initialRenderingHandlers = Data.IntMap.Lazy.fromList [(floorId, HaskellGame.Rendering.Renderer.rectRenderer),
-                                                          (platformId, HaskellGame.Rendering.Renderer.rectRenderer)
-                                                          ] 
-
-initialBoundingBoxState :: BoundingBoxState
-initialBoundingBoxState = Data.IntMap.Lazy.fromList [(floorId, BoundingBox 0 0 640 10), (platformId, BoundingBox (-25) (-25) 50 50)]
-
-
+randomSquareId :: Int
+randomSquareId = 99
 
 runGame :: IO ()
 runGame = do
@@ -62,12 +50,13 @@ runGame = do
   let menuState = MenuState { menuPosition = 0, menuItems = ["Start Game","Options","Quit"], menuFont = font }
   HaskellGame.Menu.Manager.runMenu menuState videoSurface
   
-  let gameState = initializeGameState $ GameState { worldState = initialState, 
+  let gameState = initializeGameState $ GameState { worldState = Data.IntMap.Lazy.empty, 
                               _resources = resources, 
                               actorStates = Data.IntMap.Lazy.empty, 
-                              physicsState = Data.IntMap.Lazy.empty, 
-                              boundingBoxState = initialBoundingBoxState,
-                              renderingHandlers = initialRenderingHandlers,
+                              physicsState = Data.IntMap.Lazy.empty,
+                              _animationStates = Data.IntMap.Lazy.empty, 
+                              boundingBoxState = Data.IntMap.Lazy.empty,
+                              renderingHandlers = Data.IntMap.Lazy.empty,
                               _font = font}
   
   
@@ -81,7 +70,7 @@ runGame = do
 
 initializeGameState :: GameState -> GameState
 initializeGameState gameState = 
-    insertEntities gameState [GameEntity 99 [toComponent (BoundingBox 0 0 10 10), 
+    insertEntities gameState [GameEntity randomSquareId [toComponent (BoundingBox 0 0 10 10), 
                                               toComponent (Position 300 5),
                                               toComponent HaskellGame.Rendering.Renderer.rectRenderer ],
                               GameEntity playerId [toComponent $ Position 5 5,
@@ -89,6 +78,14 @@ initializeGameState gameState =
                                                     toComponent $ BoundingBox 0 0 66 92,
                                                     toComponent $ Idle,
                                                     toComponent $ HaskellGame.Rendering.Renderer.animatedRender
+                                                    ],
+                              GameEntity floorId  [toComponent $ Position 0 400,
+                                                     toComponent $ HaskellGame.Rendering.Renderer.rectRenderer,
+                                                     toComponent $ BoundingBox 0 0 640 10
+                                                    ],
+                              GameEntity platformId  [toComponent $ Position 500 300,
+                                                     toComponent $ HaskellGame.Rendering.Renderer.rectRenderer,
+                                                     toComponent $ BoundingBox (-25) (-25) 50 50
                                                     ]
                              ] 
 
@@ -99,7 +96,7 @@ gameLoop :: (GameState -> IO t) -> IO Event -> GameState -> GHC.Word.Word32 -> I
 gameLoop drawAction eventAction gameState lastFrameTicks = do
  
   events <- HaskellGame.HumanInterface.Manager.pollEvents eventAction []
-  let gameEvents = GameEventQueues { gameActions = concat $ Data.List.map (playerGameAction playerId) events,
+  let gameEvents = GameEventQueues { gameActions = concat $ Data.List.map (HaskellGame.HumanInterface.Manager.playerGameAction playerId) events,
                                   physicsActions = [] }
   
   let state = Data.Maybe.isNothing $ find (\x -> x == Graphics.UI.SDL.Events.Quit) events 
@@ -124,28 +121,6 @@ gameLoop drawAction eventAction gameState lastFrameTicks = do
       Graphics.UI.SDL.Time.delay 30
       gameLoop drawAction eventAction finalState currentTicks
     False -> return ()
-
-playerGameAction :: GameEntityIdentifier -> Graphics.UI.SDL.Events.Event -> [GameEvent GameAction]   
-playerGameAction entityId =  (Data.List.map (\ev -> GameEvent { _identifier = entityId, _gameEvent =  ev})) . gameAction 
-    
-gameAction :: Graphics.UI.SDL.Events.Event -> [GameAction]   
-gameAction event = case event of
-  KeyDown keysym -> 
-    case Keysym.symKey keysym of
-      Keysym.SDLK_RIGHT -> [MoveRight]
-      Keysym.SDLK_LEFT -> [MoveLeft]
-      Keysym.SDLK_UP -> [Jump]
-      _ -> []
-  KeyUp keysym ->
-    case Keysym.symKey keysym of
-      Keysym.SDLK_RIGHT -> [CancelRight]
-      Keysym.SDLK_LEFT -> [CancelLeft]
-      Keysym.SDLK_UP -> [StopJump]
-      _ -> []
-  _ -> []   
-
-     
-
 
 
 

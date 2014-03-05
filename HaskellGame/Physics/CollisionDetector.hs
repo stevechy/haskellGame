@@ -26,12 +26,14 @@ collides ((idA,bbA,posA),(idB,bbB,posB)) = ((xa1 <= xb1 && xb1 <= xa2) || (xb1 <
 
 detectAndResolveCollisions :: Int -> (GameState, GameEventQueues) -> (GameState, GameEventQueues)
 detectAndResolveCollisions delta (gameState, eventQueues) = (Data.List.foldl' respondToCollision gameState (collisions gameState), eventQueues)
-                                             
+                        
+respondToCollision :: GameState -> ((Key, t, t1), (Key, t2, t3)) -> GameState                     
 respondToCollision gameStateSeed  ((idA,bbA,posA),(idB,bbB, posB)) 
   | movable idA gameStateSeed = gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (\phys -> phys { vy = 0})  idA (physicsState gameStateSeed) }
   | movable idB gameStateSeed = gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (\phys -> phys { vy = 0})  idB (physicsState gameStateSeed) }
   | True = gameStateSeed
 
+movable :: Key -> GameState -> Bool
 movable ident gameState = member ident $ actorStates gameState
   
 collisions :: GameState -> [(CollisionUnit, CollisionUnit)]
@@ -43,4 +45,6 @@ collisions gameState =
 collisionProduct :: [a] -> [(a,a)]
 collisionProduct (x:xs) = Data.List.foldr (\ item seed -> (x,item) : seed)  (collisionProduct xs) xs
 collisionProduct [] = []
-                                             
+                          
+
+                   

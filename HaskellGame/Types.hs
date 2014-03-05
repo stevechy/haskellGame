@@ -25,9 +25,9 @@ type RenderingHandler = GameEntityIdentifier -> GameState -> Surface -> IO ()
 
 type RenderingHandlers = Data.IntMap.Lazy.IntMap RenderingHandler
 
-type Animator = GameState -> Int -> IO ()
+data PlayingClip = PlayingClip { _clipId :: GameEntityIdentifier , startTime :: Int }
 
-type Animators = Data.IntMap.Lazy.IntMap Animator
+type AnimationStates = Data.IntMap.Lazy.IntMap PlayingClip
 
 type GraphicResources = Data.IntMap.Lazy.IntMap GraphicResource
 
@@ -46,6 +46,7 @@ data GameState = GameState { worldState :: WorldState,
                              actorStates :: ActorStates, 
                              physicsState::PhysicsState, 
                              boundingBoxState :: BoundingBoxState,
+                             _animationStates :: AnimationStates,
                              renderingHandlers :: RenderingHandlers, 
                              _font :: Font }
 
