@@ -1,0 +1,9 @@
+The following license files apply to the following folders:
+
+The Fonts folder is subject to the license Fonts/LICENSE.SourceSansPro.Fonts.Only.txt
+
+The "Platformer Art Complete Pack_0" folder is subject to license "Platformer Art Complete Pack_0/license.txt"
+
+The remaining files are subject to the license LICENSE.haskellGame
+
+
