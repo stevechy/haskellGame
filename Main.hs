@@ -59,7 +59,7 @@ runGame = do
                               _animationStates = Data.IntMap.Lazy.empty, 
                               boundingBoxState = Data.IntMap.Lazy.empty,
                               renderingHandlers = Data.IntMap.Lazy.empty,
-                              _font = font}
+                              _font = Just font}
   
   
   let eventAction = Graphics.UI.SDL.Events.pollEvent

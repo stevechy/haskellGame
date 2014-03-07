@@ -69,7 +69,8 @@ drawGame :: Graphics.UI.SDL.Types.Surface -> GameState -> IO ()
 drawGame videoSurface gameState = do  
   let black = SDL.Pixel 0x00000000  
   _ <- Graphics.UI.SDL.Video.fillRect videoSurface Nothing black
-  message <- renderTextBlended (_font gameState) "Score" $ Color 255 0 0
+  let Just font = _font gameState
+  message <- renderTextBlended font "Score" $ Color 255 0 0
   rect <- getClipRect message
   _ <- blitSurface message Nothing videoSurface $ Just $ rect { rectX = 50, rectY=0}
   HaskellGame.Rendering.Renderer.drawWorld videoSurface gameState

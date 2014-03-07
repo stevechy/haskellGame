@@ -8,12 +8,12 @@ import Graphics.UI.SDL.TTF
 
 type GameEntityIdentifier = Int
 
-data Position = Position { _x :: Int, _y :: Int} deriving Show
+data Position = Position { _x :: Int, _y :: Int} deriving (Show, Eq)
 
 
 data VelocityAcceleration = VelocityAcceleration { vx::Double, vy::Double, ax::Double, ay::Double}
 
-data BoundingBox = BoundingBox { relX :: Int, relY :: Int, boxWidth :: Int, boxHeight::Int} deriving Show
+data BoundingBox = BoundingBox { relX :: Int, relY :: Int, boxWidth :: Int, boxHeight::Int} deriving (Show, Eq)
 
 type BoundingBoxState = Data.IntMap.Lazy.IntMap BoundingBox
 
@@ -48,15 +48,27 @@ data GameState = GameState { worldState :: WorldState,
                              boundingBoxState :: BoundingBoxState,
                              _animationStates :: AnimationStates,
                              renderingHandlers :: RenderingHandlers, 
-                             _font :: Font }
+                             _font :: Maybe Font }
 
 
-
+emptyGameState = GameState { worldState = Data.IntMap.Lazy.empty, 
+                              _resources = Data.IntMap.Lazy.empty, 
+                              actorStates = Data.IntMap.Lazy.empty, 
+                              physicsState = Data.IntMap.Lazy.empty,
+                              _animationStates = Data.IntMap.Lazy.empty, 
+                              boundingBoxState = Data.IntMap.Lazy.empty,
+                              renderingHandlers = Data.IntMap.Lazy.empty,
+                              _font = Nothing }
 
 
 data GameEventQueues = GameEventQueues {
     gameActions :: [GameEvent GameAction],
     physicsActions :: [GameEvent PhysicsAction]
+}
+
+emptyGameEventQueues = GameEventQueues {
+    gameActions = [],
+    physicsActions = []
 }
 
 data MenuState = MenuState {
