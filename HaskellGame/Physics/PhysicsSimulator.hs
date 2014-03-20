@@ -1,4 +1,4 @@
-module HaskellGame.Physics.Simulator where
+module HaskellGame.Physics.PhysicsSimulator where
 
 import HaskellGame.Types
 import Data.IntMap.Lazy

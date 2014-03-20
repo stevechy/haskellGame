@@ -1,4 +1,4 @@
-module HaskellGame.Gameplay.Simulator where
+module HaskellGame.Gameplay.GamePlaySimulator where
 
 import HaskellGame.Types
 import Data.List

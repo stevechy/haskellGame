@@ -13,12 +13,12 @@ import Data.IntMap.Lazy
 import HaskellGame.Types
 import HaskellGame.Game
 
-import qualified HaskellGame.Physics.Simulator
-import qualified HaskellGame.Physics.CollisionDetector
-import qualified HaskellGame.Rendering.Renderer
-import qualified HaskellGame.Gameplay.Simulator
+import qualified HaskellGame.Physics.PhysicsSimulator as PhysicsSimulator
+import qualified HaskellGame.Physics.CollisionDetector as CollisionDetector
+import qualified HaskellGame.Rendering.Renderer as Renderer
+import qualified HaskellGame.Gameplay.GamePlaySimulator as GamePlaySimulator
 import qualified HaskellGame.Resources.ResourceManager
-import qualified HaskellGame.HumanInterface.Manager
+import qualified HaskellGame.HumanInterface.HumanInterfaceManager as HumanInterfaceManager
 import qualified HaskellGame.Menu.Manager
 
 main :: IO ()
@@ -63,7 +63,7 @@ runGame = do
   
   
   let eventAction = Graphics.UI.SDL.Events.pollEvent
-  let drawAction = HaskellGame.Rendering.Renderer.drawGame videoSurface 
+  let drawAction = Renderer.drawGame videoSurface 
   
     
   gameLoop drawAction eventAction gameState initialTicks
@@ -74,20 +74,20 @@ initializeGameState :: GameState -> GameState
 initializeGameState gameState = 
     insertEntities gameState [GameEntity randomSquareId [toComponent (BoundingBox 0 0 10 10), 
                                               toComponent (Position 300 5),
-                                              toComponent HaskellGame.Rendering.Renderer.rectRenderer ],
+                                              toComponent Renderer.rectRenderer ],
                               GameEntity playerId [toComponent $ Position 5 5,
                                                     toComponent $ VelocityAcceleration {vx = 0, vy = 0.00, ax = 0, ay = 0.0002},
                                                     toComponent $ BoundingBox 0 0 66 92,
                                                     toComponent $ Idle,
-                                                    toComponent $ HaskellGame.Rendering.Renderer.animatedRender,
+                                                    toComponent $ Renderer.animatedRender,
                                                     toComponent $ AnimationClip {_resourceId = playerId, _startTime = 0, _rate = 125}
                                                     ],
                               GameEntity floorId  [toComponent $ Position 0 400,
-                                                     toComponent $ HaskellGame.Rendering.Renderer.rectRenderer,
+                                                     toComponent $ Renderer.rectRenderer,
                                                      toComponent $ BoundingBox 0 0 640 10
                                                     ],
                               GameEntity platformId  [toComponent $ Position 500 300,
-                                                     toComponent $ HaskellGame.Rendering.Renderer.rectRenderer,
+                                                     toComponent $ Renderer.rectRenderer,
                                                      toComponent $ BoundingBox (-25) (-25) 50 50
                                                     ]
                              ] 
@@ -98,8 +98,8 @@ initializeGameState gameState =
 gameLoop :: (GameState -> IO t) -> IO Event -> GameState -> GHC.Word.Word32 -> IO ()
 gameLoop drawAction eventAction gameState lastFrameTicks = do
  
-  events <- HaskellGame.HumanInterface.Manager.pollEvents eventAction []
-  let gameEvents = GameEventQueues { gameActions = concat $ Data.List.map (HaskellGame.HumanInterface.Manager.playerGameAction playerId) events,
+  events <- HumanInterfaceManager.pollEvents eventAction []
+  let gameEvents = GameEventQueues { gameActions = concat $ Data.List.map (HumanInterfaceManager.playerGameAction playerId) events,
                                   physicsActions = [] }
   
   let state = Data.Maybe.isNothing $ find (\x -> x == Graphics.UI.SDL.Events.Quit) events 
@@ -110,10 +110,10 @@ gameLoop drawAction eventAction gameState lastFrameTicks = do
    
   let (finalState, finalQueues) = 
         Data.List.foldl' ( \ currentGameState gameStep -> gameStep currentGameState) (gameState, gameEvents) 
-                   [ HaskellGame.Gameplay.Simulator.processGameStateOutputEvents, 
-                     HaskellGame.Physics.Simulator.applyPhysicsChanges, 
-                     HaskellGame.Physics.Simulator.applyPhysics frameDelay, 
-                     HaskellGame.Physics.CollisionDetector.detectAndResolveCollisions frameDelay
+                   [ GamePlaySimulator.processGameStateOutputEvents, 
+                     PhysicsSimulator.applyPhysicsChanges, 
+                     PhysicsSimulator.applyPhysics frameDelay, 
+                     CollisionDetector.detectAndResolveCollisions frameDelay
                    ]        
   
   

@@ -1,4 +1,4 @@
-module HaskellGame.HumanInterface.Manager
+module HaskellGame.HumanInterface.HumanInterfaceManager
 where
 
 import Graphics.UI.SDL.Events 

@@ -7,8 +7,8 @@ import Test.HUnit
 import HaskellGame.Types
 import HaskellGame.Game
 
-import qualified HaskellGame.Physics.Simulator
-import qualified HaskellGame.Physics.CollisionDetector
+import qualified HaskellGame.Physics.PhysicsSimulator as PhysicsSimulator
+import qualified HaskellGame.Physics.CollisionDetector as CollisionDetector
 
 import qualified Data.IntMap.Lazy
 
@@ -24,7 +24,7 @@ tests = TestList [
                                                          toComponent $ BoundingBox 0 0 66 92]
                  let gameState = insertEntity intialGameState playerEntity
                  let physicsTimeInterval = 1000
-                 let (gameStateAfterPhysics, _) = HaskellGame.Physics.Simulator.applyPhysics physicsTimeInterval (gameState, HaskellGame.Types.emptyGameEventQueues)
+                 let (gameStateAfterPhysics, _) = PhysicsSimulator.applyPhysics physicsTimeInterval (gameState, HaskellGame.Types.emptyGameEventQueues)
                  let positionAfterPhysics = Data.IntMap.Lazy.lookup playerEntityId $ worldState gameStateAfterPhysics
                  assertEqual "Force was applied" (Just $ Position 5 205) positionAfterPhysics)
         ),
@@ -39,7 +39,7 @@ tests = TestList [
                                                          toComponent $ BoundingBox 0 0 5 5]
                  let gameState = insertEntities intialGameState [playerEntity, enemyEntity]
                  
-                 let [((collisionEntityA,_,_), (collisionEntityB,_,_)) ] = HaskellGame.Physics.CollisionDetector.collisions gameState
+                 let [((collisionEntityA,_,_), (collisionEntityB,_,_)) ] = CollisionDetector.collisions gameState
                  assertEqual "Collisions detected" (playerEntityId, enemyEntityId) (collisionEntityA, collisionEntityB))
         )
     ]

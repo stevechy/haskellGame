@@ -7,7 +7,7 @@ import qualified Graphics.UI.SDL.Video
 import qualified Graphics.UI.SDL.TTF
 import qualified Graphics.UI.SDL.Time
 import Graphics.UI.SDL.Keysym as Keysym
-import qualified HaskellGame.HumanInterface.Manager
+import qualified HaskellGame.HumanInterface.HumanInterfaceManager as HumanInterfaceManager
 import HaskellGame.Types
 import qualified Data.List
 import qualified Data.Maybe
@@ -16,7 +16,7 @@ import Control.Monad
 
 runMenu :: HaskellGame.Types.MenuState -> Graphics.UI.SDL.Surface -> IO ()
 runMenu menuState videoSurface = do
-    events <- HaskellGame.HumanInterface.Manager.sdlPollEvents
+    events <- HumanInterfaceManager.sdlPollEvents
     let menuActions = concat $ Data.List.map toMenuActions events
     let state = (Data.Maybe.isNothing $ Data.List.find (\x -> x == Graphics.UI.SDL.Events.Quit) events ) && (Data.Maybe.isNothing $ Data.List.find (\x -> x == SelectItem) menuActions) 
 
