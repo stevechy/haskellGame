@@ -12,6 +12,8 @@ boundingBoxList gameState = foldrWithKey bbWithPosition [] $ boundingBoxState ga
         bbWithPosition key value seed = case Data.IntMap.Lazy.lookup key worldStateItem of
           Just pos -> (key, value, pos) : seed
           Nothing -> seed
+
+
           
 collides :: (CollisionUnit, CollisionUnit) -> Bool
 collides ((idA,bbA,posA),(idB,bbB,posB)) = ((xa1 <= xb1 && xb1 <= xa2) || (xb1 <= xa1 && xa1 <= xb2)) && ((ya1 <= yb1 && yb1 <= ya2) || (yb1 <= ya1 && ya1 <= yb2))
@@ -23,6 +25,16 @@ collides ((idA,bbA,posA),(idB,bbB,posB)) = ((xa1 <= xb1 && xb1 <= xa2) || (xb1 <
         ya2 = ya1 + (boxHeight bbA)
         yb1 = (_y posB) + (relY bbB)
         yb2 = yb1 + (boxHeight bbB)
+
+collidesFast :: (CollisionUnit, CollisionUnit) -> Bool
+collidesFast ((idA,bbA,posA),(idB,bbB,posB)) = xOverlap && yOverlap
+  where
+        centerAx = (_x posA) + (relX bbA) + ((boxWidth bbA) `div` 2)
+        centerBx = (_x posB) + (relX bbB) + ((boxWidth bbB) `div` 2)
+        xOverlap = (abs $ centerAx - centerBx) * 2 < (boxWidth bbA + boxWidth bbB)
+        centerAy = (_y posA) + (relY bbA) + ((boxHeight bbA) `div` 2)
+        centerBy = (_y posB) + (relY bbB) + ((boxHeight bbB) `div` 2)
+        yOverlap = (abs $ centerAy - centerBy) * 2 < (boxHeight bbA + boxHeight bbB)
 
 detectAndResolveCollisions :: Int -> (GameState, GameEventQueues) -> (GameState, GameEventQueues)
 detectAndResolveCollisions delta (gameState, eventQueues) = (Data.List.foldl' respondToCollision gameState (collisions gameState), eventQueues)
@@ -39,7 +51,7 @@ movable ident gameState = member ident $ actorStates gameState
 collisions :: GameState -> [(CollisionUnit, CollisionUnit)]
 collisions gameState =   
   let collisionsToTest = collisionProduct $ boundingBoxList gameState
-  in  Data.List.filter collides collisionsToTest
+  in  Data.List.filter collidesFast collisionsToTest
 
        
 collisionProduct :: [a] -> [(a,a)]

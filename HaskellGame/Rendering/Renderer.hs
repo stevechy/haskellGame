@@ -54,10 +54,10 @@ animatedRender key gameState videoSurface = do
   let red = SDL.Pixel 0xFF0000FF
   let rad = SDL.Pixel 0xFFF000FF
   let Just (Position x y) = Data.IntMap.Lazy.lookup key worldStateElement
-  let Just (AnimationClip {_startTime = startTime, _rate = rate}) = Data.IntMap.Lazy.lookup key $ _animationStates gameState
-  currentTicks <- Graphics.UI.SDL.Time.getTicks 
-  let currentTime = (fromIntegral $ currentTicks) - startTime
-  let Just (ImageSet imageSet) = Data.IntMap.Lazy.lookup key graphicsElement
+  let Just (AnimationClip {_startTime = startTime,_resourceId = resourceId, _rate = rate}) = Data.IntMap.Lazy.lookup key $ _animationStates gameState
+   
+  let currentTime = _currentGameTime gameState
+  let Just (ImageSet imageSet) = Data.IntMap.Lazy.lookup resourceId graphicsElement
   let Just (BoundingBox 0 0 w h) = Data.IntMap.Lazy.lookup key $ boundingBoxState gameState 
   let frameNumber = (currentTime `quot` rate) `rem`  ((snd $ Data.Array.bounds imageSet) + 1)
   _ <- blitSurface (imageSet Data.Array.! frameNumber)  Nothing videoSurface (Just (Rect x y w h))  

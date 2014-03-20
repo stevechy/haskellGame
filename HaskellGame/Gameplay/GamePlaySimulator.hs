@@ -34,8 +34,10 @@ actorChange :: (t, t1) -> GameEvent GameAction -> (GameState -> GameState, GameE
 actorChange (gameState, events) GameEvent { _identifier = ident, _gameEvent = event } =
     case event of
         MoveRight -> (adjustActor ident MovingRight, (\events -> events {physicsActions =  GameEvent ident (Impulse {impulseVx=0.08, impulseVy=0.0}): (physicsActions events)}))
-        MoveLeft -> (adjustActor ident MovingLeft,  (\events -> events {physicsActions =  GameEvent ident (Impulse {impulseVx= -0.08, impulseVy=0.0}): (physicsActions events)}))
-        Jump -> (id, (\events -> events {physicsActions =  GameEvent ident (Impulse {impulseVx= 0.0, impulseVy= -0.2}): (physicsActions events)}))
+        MoveLeft -> (adjustActor ident MovingLeft,  (\events -> events {physicsActions =  GameEvent ident (Impulse {impulseVx= -0.08, impulseVy=0.0}): (physicsActions events),
+                                                                           animationActions = GameEvent ident (StartClip $ AnimationClip {_resourceId = 1, _startTime = 0, _rate = 125}) : (animationActions events)}))
+        Jump -> (id, (\events -> events {physicsActions =  GameEvent ident (Impulse {impulseVx= 0.0, impulseVy= -0.2}): (physicsActions events),
+                                          animationActions = GameEvent ident (StartClip $ AnimationClip {_resourceId = 5, _startTime = 0, _rate = 125}) : (animationActions events)}))
         StopJump -> (id, id)
         CancelRight -> (id, id) 
         CancelLeft -> (id, id)

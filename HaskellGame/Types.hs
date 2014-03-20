@@ -39,6 +39,8 @@ data GameAction = MoveLeft | MoveRight | Jump | StopJump | CancelLeft | CancelRi
 
 data PhysicsAction = Impulse { impulseVx::Double, impulseVy::Double }
 
+data AnimationAction = StartClip { _clip :: AnimationClip }
+
 data GameEvent event = GameEvent { _identifier :: GameEntityIdentifier, _gameEvent :: event }
 
 data GameState = GameState { worldState :: WorldState, 
@@ -48,7 +50,8 @@ data GameState = GameState { worldState :: WorldState,
                              boundingBoxState :: BoundingBoxState,
                              _animationStates :: AnimationStates,
                              renderingHandlers :: RenderingHandlers, 
-                             _font :: Maybe Font }
+                             _font :: Maybe Font,
+                             _currentGameTime :: Int }
 
 
 emptyGameState = GameState { worldState = Data.IntMap.Lazy.empty, 
@@ -58,17 +61,20 @@ emptyGameState = GameState { worldState = Data.IntMap.Lazy.empty,
                               _animationStates = Data.IntMap.Lazy.empty, 
                               boundingBoxState = Data.IntMap.Lazy.empty,
                               renderingHandlers = Data.IntMap.Lazy.empty,
-                              _font = Nothing }
+                              _font = Nothing ,
+                              _currentGameTime = 0}
 
 
 data GameEventQueues = GameEventQueues {
     gameActions :: [GameEvent GameAction],
-    physicsActions :: [GameEvent PhysicsAction]
+    physicsActions :: [GameEvent PhysicsAction],
+    animationActions :: [GameEvent AnimationAction]
 }
 
 emptyGameEventQueues = GameEventQueues {
     gameActions = [],
-    physicsActions = []
+    physicsActions = [],
+    animationActions = []
 }
 
 data MenuState = MenuState {

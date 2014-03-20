@@ -20,6 +20,7 @@ import qualified HaskellGame.Gameplay.GamePlaySimulator as GamePlaySimulator
 import qualified HaskellGame.Resources.ResourceManager
 import qualified HaskellGame.HumanInterface.HumanInterfaceManager as HumanInterfaceManager
 import qualified HaskellGame.Menu.Manager
+import qualified HaskellGame.Animation.Animator as Animator
 
 main :: IO ()
 main = Graphics.UI.SDL.withInit [Graphics.UI.SDL.InitEverything] runGame
@@ -37,6 +38,9 @@ platformId = 3
 walkCycleId :: Int
 walkCycleId = 4
 
+jumpId :: Int
+jumpId = 5
+
 randomSquareId :: Int
 randomSquareId = 99
 
@@ -45,7 +49,7 @@ runGame = do
   _ <- Graphics.UI.SDL.TTF.init
   font <- openFont "Fonts/SourceSansPro-Black.ttf" 20
   Just videoSurface <- Graphics.UI.SDL.Video.trySetVideoMode 800 540 32 [ Graphics.UI.SDL.DoubleBuf]
-  resources <- HaskellGame.Resources.ResourceManager.loadResources playerId walkCycleId
+  resources <- HaskellGame.Resources.ResourceManager.loadResources playerId walkCycleId jumpId
 
   let menuState = MenuState { menuPosition = 0, menuItems = ["Start Game","Options","Quit"], menuFont = font }
   HaskellGame.Menu.Manager.runMenu menuState videoSurface
@@ -59,7 +63,8 @@ runGame = do
                               _animationStates = Data.IntMap.Lazy.empty, 
                               boundingBoxState = Data.IntMap.Lazy.empty,
                               renderingHandlers = Data.IntMap.Lazy.empty,
-                              _font = Just font}
+                              _font = Just font,
+                              _currentGameTime = 0}
   
   
   let eventAction = Graphics.UI.SDL.Events.pollEvent
@@ -99,7 +104,7 @@ gameLoop :: (GameState -> IO t) -> IO Event -> GameState -> GHC.Word.Word32 -> I
 gameLoop drawAction eventAction gameState lastFrameTicks = do
  
   events <- HumanInterfaceManager.pollEvents eventAction []
-  let gameEvents = GameEventQueues { gameActions = concat $ Data.List.map (HumanInterfaceManager.playerGameAction playerId) events,
+  let gameEvents = emptyGameEventQueues { gameActions = concat $ Data.List.map (HumanInterfaceManager.playerGameAction playerId) events,
                                   physicsActions = [] }
   
   let state = Data.Maybe.isNothing $ find (\x -> x == Graphics.UI.SDL.Events.Quit) events 
@@ -110,10 +115,12 @@ gameLoop drawAction eventAction gameState lastFrameTicks = do
    
   let (finalState, finalQueues) = 
         Data.List.foldl' ( \ currentGameState gameStep -> gameStep currentGameState) (gameState, gameEvents) 
-                   [ GamePlaySimulator.processGameStateOutputEvents, 
+                   [ (\ (currentGameState, currentQueues) -> (currentGameState {_currentGameTime = fromIntegral $ currentTicks }, currentQueues)),
+                     GamePlaySimulator.processGameStateOutputEvents,          
                      PhysicsSimulator.applyPhysicsChanges, 
                      PhysicsSimulator.applyPhysics frameDelay, 
-                     CollisionDetector.detectAndResolveCollisions frameDelay
+                     CollisionDetector.detectAndResolveCollisions frameDelay,
+                     Animator.updateAnimationState
                    ]        
   
   
