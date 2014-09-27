@@ -1,0 +1,3 @@
+[submodule "ext-src/HaskQuery"]
+	path = ext-src/HaskQuery
+	url = git://github.com/stevechy/HaskQuery.git
