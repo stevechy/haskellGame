@@ -14,7 +14,7 @@ boundingBoxList gameState = foldrWithKey bbWithPosition [] $ boundingBoxState ga
           Nothing -> seed
 
 
-          
+
 collides :: (CollisionUnit, CollisionUnit) -> Bool
 collides ((idA,bbA,posA),(idB,bbB,posB)) = ((xa1 <= xb1 && xb1 <= xa2) || (xb1 <= xa1 && xa1 <= xb2)) && ((ya1 <= yb1 && yb1 <= ya2) || (yb1 <= ya1 && ya1 <= yb2))
   where xa1 = (_x posA) +  (relX bbA)
@@ -27,7 +27,7 @@ collides ((idA,bbA,posA),(idB,bbB,posB)) = ((xa1 <= xb1 && xb1 <= xa2) || (xb1 <
         yb2 = yb1 + (boxHeight bbB)
 
 collidesFast :: (CollisionUnit, CollisionUnit) -> Bool
-collidesFast ((idA,bbA,posA),(idB,bbB,posB)) = xOverlap && yOverlap
+collidesFast ((_idA,bbA,posA),(_idB,bbB,posB)) = xOverlap && yOverlap
   where
         centerAx = (_x posA) + (relX bbA) + ((boxWidth bbA) `div` 2)
         centerBx = (_x posB) + (relX bbB) + ((boxWidth bbB) `div` 2)
@@ -36,27 +36,44 @@ collidesFast ((idA,bbA,posA),(idB,bbB,posB)) = xOverlap && yOverlap
         centerBy = (_y posB) + (relY bbB) + ((boxHeight bbB) `div` 2)
         yOverlap = (abs $ centerAy - centerBy) * 2 < (boxHeight bbA + boxHeight bbB)
 
+yOverlapDistance :: (CollisionUnit, CollisionUnit) -> Int
+yOverlapDistance ((_idA,bbA,posA),(_idB,bbB,posB))  =
+    if distance > 0
+        then distance - (boxAHalfHeight + boxBHalfHeight)
+        else distance + (boxAHalfHeight + boxBHalfHeight)
+    where
+            boxAHalfHeight = (boxHeight bbA) `div` 2
+            boxBHalfHeight = (boxHeight bbB) `div` 2
+            centerAy = (_y posA) + (relY bbA) + (boxAHalfHeight)
+            centerBy = (_y posB) + (relY bbB) + (boxBHalfHeight)
+            distance = (centerAy - centerBy)
+
+
 detectAndResolveCollisions :: Int -> (GameState, GameEventQueues) -> (GameState, GameEventQueues)
-detectAndResolveCollisions delta (gameState, eventQueues) = (Data.List.foldl' respondToCollision gameState (collisions gameState), eventQueues)
-                        
-respondToCollision :: GameState -> ((Key, t, t1), (Key, t2, t3)) -> GameState                     
-respondToCollision gameStateSeed  ((idA,bbA,posA),(idB,bbB, posB)) 
-  | movable idA gameStateSeed = gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (\phys -> phys { vy = 0})  idA (physicsState gameStateSeed) }
-  | movable idB gameStateSeed = gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (\phys -> phys { vy = 0})  idB (physicsState gameStateSeed) }
+detectAndResolveCollisions _delta (gameState, eventQueues) = (Data.List.foldl' respondToCollision gameState (collisions gameState), eventQueues)
+
+respondToCollision :: GameState -> (CollisionUnit, CollisionUnit) -> GameState
+respondToCollision gameStateSeed  ((idA,bbA,posA),(idB,bbB, posB))
+  | movable idA gameStateSeed = gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (\phys -> phys { vy = 0})  idA (physicsState gameStateSeed),
+                                                worldState = Data.IntMap.Lazy.adjust (\ pos -> pos {_y = (_y pos) - (yOverlapDistance ((idA,bbA,posA),(idB,bbB, posB)) ) } ) idA (worldState gameStateSeed)
+                                              }
+  | movable idB gameStateSeed = gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (\phys -> phys { vy = 0})  idB (physicsState gameStateSeed),
+                                                worldState = Data.IntMap.Lazy.adjust (\ pos -> pos {_y = (_y pos) - (yOverlapDistance ((idB,bbB, posB),(idA,bbA,posA)) ) } ) idA (worldState gameStateSeed)
+                                              }
   | True = gameStateSeed
 
 movable :: Key -> GameState -> Bool
 movable ident gameState = member ident $ actorStates gameState
-  
+
 collisions :: GameState -> [(CollisionUnit, CollisionUnit)]
-collisions gameState =   
+collisions gameState =
   let collisionsToTest = collisionProduct $ boundingBoxList gameState
   in  Data.List.filter collidesFast collisionsToTest
 
-       
+
 collisionProduct :: [a] -> [(a,a)]
 collisionProduct (x:xs) = Data.List.foldr (\ item seed -> (x,item) : seed)  (collisionProduct xs) xs
 collisionProduct [] = []
-                          
 
-                   
+
+

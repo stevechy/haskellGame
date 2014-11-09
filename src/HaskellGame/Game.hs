@@ -5,37 +5,41 @@ import HaskellGame.Types
 
 import Data.IntMap.Lazy
 import qualified Data.List
+import qualified HaskQuery
 
 
 
-data GameComponent = PositionComponent Position 
-                       | CollisionComponent BoundingBox 
-                       | PhysicsComponent VelocityAcceleration 
-                       | RenderingComponent RenderingHandler 
+data GameComponent = PositionComponent Position
+                       | CollisionComponent BoundingBox
+                       | PhysicsComponent VelocityAcceleration
+                       | RenderingComponent RenderingHandler
                        | ActorComponent ActorState
                        | AnimationComponent AnimationClip
+                       | PlayerComponent Player
 
 class GameComponentStore a where
     toComponent :: a -> GameComponent
 
 instance GameComponentStore Position where
-    toComponent = PositionComponent 
+    toComponent = PositionComponent
 
 instance GameComponentStore BoundingBox where
-    toComponent = CollisionComponent 
+    toComponent = CollisionComponent
 
 instance GameComponentStore VelocityAcceleration where
-    toComponent = PhysicsComponent 
+    toComponent = PhysicsComponent
 
 instance GameComponentStore RenderingHandler where
-    toComponent = RenderingComponent 
+    toComponent = RenderingComponent
 
 instance GameComponentStore ActorState where
-    toComponent = ActorComponent 
+    toComponent = ActorComponent
 
 instance GameComponentStore AnimationClip where
-    toComponent = AnimationComponent 
+    toComponent = AnimationComponent
 
+instance GameComponentStore Player where
+    toComponent = PlayerComponent
 
 data GameEntity = GameEntity GameEntityIdentifier [GameComponent]
 
@@ -49,6 +53,7 @@ insertComponent identifier gameComponent gameState =
         RenderingComponent r -> gameState { renderingHandlers = insert identifier r $ renderingHandlers gameState}
         ActorComponent a -> gameState { actorStates = insert identifier a $ actorStates gameState}
         AnimationComponent a -> gameState { _animationStates = insert identifier a $ _animationStates gameState}
+        PlayerComponent player -> gameState { _players = HaskQuery.insert (_players gameState) player}
 
 insertEntity  :: GameState -> GameEntity -> GameState
 insertEntity gameState (GameEntity identifier gameComponents)  = Data.List.foldl' (\ gs gc -> insertComponent identifier gc gs) gameState gameComponents

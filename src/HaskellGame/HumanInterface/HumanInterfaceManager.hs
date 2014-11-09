@@ -1,13 +1,13 @@
 module HaskellGame.HumanInterface.HumanInterfaceManager
 where
 
-import Graphics.UI.SDL.Events 
+import Graphics.UI.SDL.Events
 import HaskellGame.Types
 import Graphics.UI.SDL.Keysym as Keysym
 import qualified Data.List
 
 
-pollEvents :: IO (Event) -> [Event] -> IO [Event]  
+pollEvents :: IO (Event) -> [Event] -> IO [Event]
 pollEvents eventAction events = do
   event <- eventAction
   case event of
@@ -18,12 +18,13 @@ sdlPollEvents :: IO [Event]
 sdlPollEvents = pollEvents Graphics.UI.SDL.Events.pollEvent []
 
 
-playerGameAction :: GameEntityIdentifier -> Graphics.UI.SDL.Events.Event -> [GameEvent GameAction]   
-playerGameAction entityId =  (Data.List.map (\ev -> GameEvent { _identifier = entityId, _gameEvent =  ev})) . gameAction 
-    
-gameAction :: Graphics.UI.SDL.Events.Event -> [GameAction]   
+
+playerGameAction :: GameEntityIdentifier -> Graphics.UI.SDL.Events.Event -> [GameEvent GameAction]
+playerGameAction entityId =  (Data.List.map (\ev -> GameEvent { _identifier = entityId, _gameEvent =  ev})) . gameAction
+
+gameAction :: Graphics.UI.SDL.Events.Event -> [GameAction]
 gameAction event = case event of
-  KeyDown keysym -> 
+  KeyDown keysym ->
     case Keysym.symKey keysym of
       Keysym.SDLK_RIGHT -> [MoveRight]
       Keysym.SDLK_LEFT -> [MoveLeft]
@@ -35,7 +36,7 @@ gameAction event = case event of
       Keysym.SDLK_LEFT -> [CancelLeft]
       Keysym.SDLK_UP -> [StopJump]
       _ -> []
-  _ -> []   
+  _ -> []
 
-     
+
 
