@@ -45,6 +45,12 @@ jumpId = 5
 player2Id :: Int
 player2Id = 6
 
+floor2Id :: Int
+floor2Id = 7
+
+cameraId :: Int
+cameraId = 8
+
 randomSquareId :: Int
 randomSquareId = 99
 
@@ -104,9 +110,16 @@ initializeGameState gameState =
                                                      toComponent $ Renderer.rectRenderer,
                                                      toComponent $ BoundingBox 0 0 640 10
                                                     ],
+                              GameEntity floor2Id  [toComponent $ Position 700 400,
+                                                     toComponent $ Renderer.rectRenderer,
+                                                     toComponent $ BoundingBox 0 0 640 50
+                                                    ],
                               GameEntity platformId  [toComponent $ Position 500 300,
                                                      toComponent $ Renderer.rectRenderer,
                                                      toComponent $ BoundingBox (-25) (-25) 50 50
+                                                    ],
+                              GameEntity cameraId   [ toComponent $ Camera { _cameraId = 1},
+                                                      toComponent $ Position { _x = 0, _y = 0}
                                                     ]
                              ]
 

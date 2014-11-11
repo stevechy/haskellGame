@@ -18,7 +18,7 @@ boundingBoxList gameState = foldrWithKey bbWithPosition [] $ boundingBoxState ga
 
 
 collides :: (CollisionUnit, CollisionUnit) -> Bool
-collides ((idA,bbA,posA),(idB,bbB,posB)) = ((xa1 <= xb1 && xb1 <= xa2) || (xb1 <= xa1 && xa1 <= xb2)) && ((ya1 <= yb1 && yb1 <= ya2) || (yb1 <= ya1 && ya1 <= yb2))
+collides ((_idA,bbA,posA),(_idB,bbB,posB)) = ((xa1 <= xb1 && xb1 <= xa2) || (xb1 <= xa1 && xa1 <= xb2)) && ((ya1 <= yb1 && yb1 <= ya2) || (yb1 <= ya1 && ya1 <= yb2))
   where xa1 = (_x posA) +  (relX bbA)
         xa2 = xa1 + (boxWidth bbA)
         xb1 = (_x posB) + (relX bbB)
@@ -66,29 +66,41 @@ detectAndResolveCollisions :: Int -> (GameState, GameEventQueues) -> (GameState,
 detectAndResolveCollisions _delta (gameState, eventQueues) = (Data.List.foldl' respondToCollision gameState (collisions gameState), eventQueues)
 
 respondToCollision :: GameState -> (CollisionUnit, CollisionUnit) -> GameState
-respondToCollision gameStateSeed  ((idA,bbA,posA),(idB,bbB, posB))
-  | movable idA gameStateSeed = let (separatingAxis, newPosition) = (adjustOverlap (idA,bbA,posA) (idB,bbB, posB) posA)
-                                    in gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (velocityAdjustment separatingAxis) idA (physicsState gameStateSeed),
-                                                worldState = Data.IntMap.Lazy.insert idA newPosition (worldState gameStateSeed)
+respondToCollision gameStateSeed  ((idA,bbA,posA),(idB,bbB, posB)) =
+  let (separatingAxis, separatingVector) = (adjustOverlap (idA,bbA,posA) (idB,bbB, posB) )
+      movableA = movable idA gameStateSeed
+      movableB = movable idB gameStateSeed
+      (adjustPosA, adjustPosB) = case (movableA, movableB) of
+                              (True, True) -> ((\pos -> pos {_x = (_x pos) - ((_vectorX separatingVector) `div` 2), _y = (_y pos) - ((_vectorY separatingVector) `div` 2)}),
+                                               (\pos -> pos {_x = (_x pos) + ((_vectorX separatingVector) `div` 2), _y = (_y pos) + ((_vectorY separatingVector) `div` 2)}))
+                              (True, False) -> ((\pos -> pos {_x = (_x pos) - ((_vectorX separatingVector) ), _y = (_y pos) - ((_vectorY separatingVector) )}),id)
+                              (False, True) -> (id,(\pos -> pos {_x = (_x pos) + ((_vectorX separatingVector) ), _y = (_y pos) + ((_vectorY separatingVector))}))
+                              (False, False) -> (id,id)
+      in gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (velocityAdjustment separatingAxis) idA $ Data.IntMap.Lazy.adjust (velocityAdjustment separatingAxis) idB $ (physicsState gameStateSeed),
+                                                worldState = Data.IntMap.Lazy.adjust adjustPosA idA $ Data.IntMap.Lazy.adjust adjustPosB idB (worldState gameStateSeed)
                                               }
-  | movable idB gameStateSeed = let (separatingAxis, newPosition) = (adjustOverlap (idB,bbB, posB) (idA,bbA,posA) posB)
-                                    in gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (velocityAdjustment separatingAxis)  idB (physicsState gameStateSeed),
-                                                worldState = Data.IntMap.Lazy.insert idB newPosition  (worldState gameStateSeed)
-                                              }
-  | True = gameStateSeed
+--  | movable idA gameStateSeed = let (separatingAxis, newPosition) = (adjustOverlap (idA,bbA,posA) (idB,bbB, posB) )
+--                                    in gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (velocityAdjustment separatingAxis) idA (physicsState gameStateSeed),
+--                                                worldState = Data.IntMap.Lazy.insert idA newPosition (worldState gameStateSeed)
+--                                              }
+--  | movable idB gameStateSeed = let (separatingAxis, newPosition) = (adjustOverlap (idB,bbB, posB) (idA,bbA,posA) )
+--                                    in gameStateSeed { physicsState = Data.IntMap.Lazy.adjust (velocityAdjustment separatingAxis)  idB (physicsState gameStateSeed),
+--                                                worldState = Data.IntMap.Lazy.insert idB newPosition  (worldState gameStateSeed)
+--                                              }
+--  | True = gameStateSeed
 
 velocityAdjustment :: SeparatingAxis -> VelocityAcceleration -> VelocityAcceleration
 velocityAdjustment separatingAxis =  case separatingAxis of
                                                         XSeparatingAxis -> (\phys -> phys {vx=0})
                                                         YSeparatingAxis -> (\phys -> phys {vy=0})
 
-adjustOverlap :: CollisionUnit -> CollisionUnit -> Position -> (SeparatingAxis,Position)
-adjustOverlap (idA,bbA,posA) (idB,bbB, posB) pos = newPosition
+adjustOverlap :: CollisionUnit -> CollisionUnit -> (SeparatingAxis,GameVector)
+adjustOverlap (idA,bbA,posA) (idB,bbB, posB) = newPosition
     where yOverlap = yOverlapDistance ((idA,bbA,posA),(idB,bbB, posB))
           xOverlap = xOverlapDistance ((idA,bbA,posA),(idB,bbB, posB))
           newPosition = if (abs yOverlap) < (abs xOverlap)
-                              then (YSeparatingAxis, pos {_y = (_y pos) - yOverlap })
-                              else (XSeparatingAxis, pos {_x = (_x pos) - xOverlap })
+                              then (YSeparatingAxis, GameVector {_vectorX = 0, _vectorY = yOverlap })
+                              else (XSeparatingAxis, GameVector {_vectorX = xOverlap, _vectorY = 0 })
 
 movable :: Key -> GameState -> Bool
 movable ident gameState = member ident $ actorStates gameState

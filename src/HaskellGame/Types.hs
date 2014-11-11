@@ -11,8 +11,11 @@ type GameEntityIdentifier = Int
 
 data Position = Position { _x :: Int, _y :: Int} deriving (Show, Eq)
 
+data GameVector = GameVector { _vectorX :: Int, _vectorY :: Int} deriving (Show, Eq)
+
 data Player = Player { _playerId:: Int, _playerObjectIdentifier :: Int}
 
+data Camera = Camera { _cameraId :: Int }
 
 data VelocityAcceleration = VelocityAcceleration { vx::Double, vy::Double, ax::Double, ay::Double}
 
@@ -54,10 +57,11 @@ data GameState = GameState { worldState :: WorldState,
                              _animationStates :: AnimationStates,
                              renderingHandlers :: RenderingHandlers,
                              _players :: HaskQuery.Relation Player (),
+                             _cameras :: HaskQuery.Relation Camera (),
                              _font :: Maybe Font,
                              _currentGameTime :: Int }
 
-
+emptyGameState :: GameState
 emptyGameState = GameState { worldState = Data.IntMap.Lazy.empty,
                               _resources = Data.IntMap.Lazy.empty,
                               actorStates = Data.IntMap.Lazy.empty,
@@ -66,6 +70,7 @@ emptyGameState = GameState { worldState = Data.IntMap.Lazy.empty,
                               boundingBoxState = Data.IntMap.Lazy.empty,
                               renderingHandlers = Data.IntMap.Lazy.empty,
                               _players = HaskQuery.empty,
+                              _cameras = HaskQuery.empty,
                               _font = Nothing ,
                               _currentGameTime = 0}
 
@@ -76,6 +81,7 @@ data GameEventQueues = GameEventQueues {
     animationActions :: [GameEvent AnimationAction]
 }
 
+emptyGameEventQueues :: GameEventQueues
 emptyGameEventQueues = GameEventQueues {
     gameActions = [],
     physicsActions = [],

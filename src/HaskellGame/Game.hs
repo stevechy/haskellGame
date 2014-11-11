@@ -16,6 +16,7 @@ data GameComponent = PositionComponent Position
                        | ActorComponent ActorState
                        | AnimationComponent AnimationClip
                        | PlayerComponent Player
+                       | CameraComponent Camera
 
 class GameComponentStore a where
     toComponent :: a -> GameComponent
@@ -41,6 +42,9 @@ instance GameComponentStore AnimationClip where
 instance GameComponentStore Player where
     toComponent = PlayerComponent
 
+instance GameComponentStore Camera where
+    toComponent = CameraComponent
+
 data GameEntity = GameEntity GameEntityIdentifier [GameComponent]
 
 insertComponent :: GameEntityIdentifier -> GameComponent -> GameState -> GameState
@@ -54,6 +58,7 @@ insertComponent identifier gameComponent gameState =
         ActorComponent a -> gameState { actorStates = insert identifier a $ actorStates gameState}
         AnimationComponent a -> gameState { _animationStates = insert identifier a $ _animationStates gameState}
         PlayerComponent player -> gameState { _players = HaskQuery.insert (_players gameState) player}
+        CameraComponent camera -> gameState { _cameras = HaskQuery.insert (_cameras gameState) camera}
 
 insertEntity  :: GameState -> GameEntity -> GameState
 insertEntity gameState (GameEntity identifier gameComponents)  = Data.List.foldl' (\ gs gc -> insertComponent identifier gc gs) gameState gameComponents
