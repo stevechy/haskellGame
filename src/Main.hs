@@ -42,6 +42,9 @@ walkCycleId = 4
 jumpId :: Int
 jumpId = 5
 
+player2Id :: Int
+player2Id = 6
+
 randomSquareId :: Int
 randomSquareId = 99
 
@@ -89,6 +92,14 @@ initializeGameState gameState =
                                                     toComponent $ AnimationClip {_resourceId = playerId, _startTime = 0, _rate = 125},
                                                     toComponent $ Player { _playerId = 1, _playerObjectIdentifier = playerId}
                                                     ],
+                              GameEntity player2Id [toComponent $ Position 50 5,
+                                                    toComponent $ VelocityAcceleration {vx = 0, vy = 0.00, ax = 0, ay = 0.0002},
+                                                    toComponent $ BoundingBox 0 0 66 92,
+                                                    toComponent $ Idle,
+                                                    toComponent $ Renderer.animatedRender,
+                                                    toComponent $ AnimationClip {_resourceId = playerId, _startTime = 0, _rate = 125},
+                                                    toComponent $ Player { _playerId = 2, _playerObjectIdentifier = player2Id}
+                                                    ],
                               GameEntity floorId  [toComponent $ Position 0 400,
                                                      toComponent $ Renderer.rectRenderer,
                                                      toComponent $ BoundingBox 0 0 640 10
@@ -106,7 +117,7 @@ gameLoop :: (GameState -> IO t) -> IO Event -> GameState -> GHC.Word.Word32 -> I
 gameLoop drawAction eventAction gameState lastFrameTicks = do
 
   events <- HumanInterfaceManager.pollEvents eventAction []
-  let gameEvents = emptyGameEventQueues { gameActions = concat $ Data.List.map (HumanInterfaceManager.playerGameAction playerId) events,
+  let gameEvents = emptyGameEventQueues { gameActions = concat $ Data.List.map (HumanInterfaceManager.playerGameAction gameState) events,
                                   physicsActions = [] }
 
   let state = Data.Maybe.isNothing $ find (\x -> x == Graphics.UI.SDL.Events.Quit) events
