@@ -114,12 +114,12 @@ initializeGameState gameState =
                                                      toComponent $ Renderer.rectRenderer,
                                                      toComponent $ BoundingBox 0 0 640 50
                                                     ],
-                              GameEntity platformId  [toComponent $ Position 500 300,
+                              GameEntity platformId  [toComponent $ Position 500 200,
                                                      toComponent $ Renderer.rectRenderer,
                                                      toComponent $ BoundingBox (-25) (-25) 50 50
                                                     ],
-                              GameEntity cameraId   [ toComponent $ Camera { _cameraId = 1},
-                                                      toComponent $ Position { _x = 0, _y = 0}
+                              GameEntity cameraId   [ toComponent $ Camera { _cameraId = 1, _cameraEntityId=cameraId},
+                                                      toComponent $ Position { _x = 100, _y = 0}
                                                     ]
                              ]
 

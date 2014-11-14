@@ -13,9 +13,9 @@ data Position = Position { _x :: Int, _y :: Int} deriving (Show, Eq)
 
 data GameVector = GameVector { _vectorX :: Int, _vectorY :: Int} deriving (Show, Eq)
 
-data Player = Player { _playerId:: Int, _playerObjectIdentifier :: Int}
+data Player = Player { _playerId:: Int, _playerObjectIdentifier :: GameEntityIdentifier}
 
-data Camera = Camera { _cameraId :: Int }
+data Camera = Camera { _cameraId :: Int, _cameraEntityId :: GameEntityIdentifier }
 
 data VelocityAcceleration = VelocityAcceleration { vx::Double, vy::Double, ax::Double, ay::Double}
 
@@ -27,7 +27,7 @@ type PhysicsState = Data.IntMap.Lazy.IntMap VelocityAcceleration
 
 type WorldState = Data.IntMap.Lazy.IntMap Position
 
-type RenderingHandler = GameEntityIdentifier -> GameState -> Surface -> IO ()
+type RenderingHandler = GameEntityIdentifier -> Maybe Camera -> GameState -> Surface -> IO ()
 
 type RenderingHandlers = Data.IntMap.Lazy.IntMap RenderingHandler
 

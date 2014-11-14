@@ -36,7 +36,7 @@ actorChange (gameState, events) GameEvent { _identifier = ident, _gameEvent = ev
         MoveRight -> (adjustActor ident MovingRight, (\events -> events {physicsActions =  GameEvent ident (Impulse {impulseVx=0.08, impulseVy=0.0}): (physicsActions events)}))
         MoveLeft -> (adjustActor ident MovingLeft,  (\events -> events {physicsActions =  GameEvent ident (Impulse {impulseVx= -0.08, impulseVy=0.0}): (physicsActions events),
                                                                            animationActions = GameEvent ident (StartClip $ AnimationClip {_resourceId = 1, _startTime = 0, _rate = 125}) : (animationActions events)}))
-        Jump -> (id, (\events -> events {physicsActions =  GameEvent ident (Impulse {impulseVx= 0.0, impulseVy= -0.2}): (physicsActions events),
+        Jump -> (id, (\events -> events {physicsActions =  GameEvent ident (Impulse {impulseVx= 0.0, impulseVy= -0.3}): (physicsActions events),
                                           animationActions = GameEvent ident (StartClip $ AnimationClip {_resourceId = 5, _startTime = 0, _rate = 125}) : (animationActions events)}))
         StopJump -> (id, id)
         CancelRight -> (id, id) 
